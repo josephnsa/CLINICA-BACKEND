@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for dir:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/Cristofer/Desktop/CLINICA YOSELIN EL RARIN/BACKEND/salud-backend/src/main/java/com/clinica/salud/modules/**)",
+      "Bash(done)",
+      "Bash(find 'c:\\\\Users\\\\Cristofer\\\\Desktop\\\\CLINICA YOSELIN EL RARIN\\\\BACKEND\\\\salud-backend' -type f -name *.json -o -name *.md -o -name *.ts -o -name *.js)"
+    ]
+  }
+}
