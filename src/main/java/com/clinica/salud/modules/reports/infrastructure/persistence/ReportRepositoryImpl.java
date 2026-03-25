@@ -1,5 +1,6 @@
 package com.clinica.salud.modules.reports.infrastructure.persistence;
 
+import com.clinica.salud.modules.reports.application.dto.ClinicalReportResponse;
 import com.clinica.salud.modules.reports.application.dto.FinancialReportResponse;
 import com.clinica.salud.modules.reports.application.dto.InventoryReportResponse;
 import com.clinica.salud.modules.reports.application.dto.OperationalReportResponse;
@@ -210,6 +211,72 @@ public class ReportRepositoryImpl implements ReportRepository {
                 .expiredItems(toLong(expired.get("expired")))
                 .criticalItems(criticalItems)
                 .build();
+    }
+
+    // ─── REPORTE CLÍNICO ──────────────────────────────────────────────────────
+
+    @Override
+    public ClinicalReportResponse getClinicalReport(UUID sedeId, LocalDate from, LocalDate to) {
+
+        Map<String, Object> counts = jdbc.queryForMap("""
+            SELECT
+                (SELECT COUNT(*) FROM clinical_notes cn
+                 JOIN appointments a ON cn.appointment_id = a.id
+                 WHERE a.sede_id = ? AND DATE(cn.created_at) BETWEEN ? AND ?)    AS total_consultations,
+                (SELECT COUNT(*) FROM exam_orders eo
+                 JOIN appointments a ON eo.appointment_id = a.id
+                 WHERE a.sede_id = ? AND DATE(eo.created_at) BETWEEN ? AND ?)    AS total_exams,
+                (SELECT COUNT(*) FROM prescriptions p
+                 JOIN appointments a ON p.appointment_id = a.id
+                 WHERE a.sede_id = ? AND DATE(p.created_at) BETWEEN ? AND ?)     AS total_prescriptions
+            """, sedeId, from, to, sedeId, from, to, sedeId, from, to);
+
+        List<Map<String, Object>> diagnosisRows = jdbc.queryForList("""
+            SELECT cn.diagnosis_code AS code, cn.diagnosis_desc AS description, COUNT(*) AS cnt
+            FROM clinical_notes cn
+            JOIN appointments a ON cn.appointment_id = a.id
+            WHERE a.sede_id = ? AND DATE(cn.created_at) BETWEEN ? AND ?
+              AND cn.diagnosis_code IS NOT NULL
+            GROUP BY cn.diagnosis_code, cn.diagnosis_desc
+            ORDER BY cnt DESC
+            LIMIT 10
+            """, sedeId, from, to);
+
+        List<Map<String, Object>> serviceRows = jdbc.queryForList("""
+            SELECT sv.name AS service_name, COUNT(*) AS cnt
+            FROM appointments a
+            JOIN services sv ON a.service_id = sv.id
+            WHERE a.sede_id = ? AND DATE(a.start_time) BETWEEN ? AND ?
+              AND a.status = 'ATTENDED'
+            GROUP BY sv.name
+            ORDER BY cnt DESC
+            LIMIT 10
+            """, sedeId, from, to);
+
+        List<Map<String, Object>> medRows = jdbc.queryForList("""
+            SELECT m.generic_name AS medication_name, COUNT(*) AS cnt
+            FROM prescription_items pi
+            JOIN prescriptions p ON pi.prescription_id = p.id
+            JOIN appointments a ON p.appointment_id = a.id
+            JOIN medications m ON pi.medication_id = m.id
+            WHERE a.sede_id = ? AND DATE(p.created_at) BETWEEN ? AND ?
+            GROUP BY m.generic_name
+            ORDER BY cnt DESC
+            LIMIT 10
+            """, sedeId, from, to);
+
+        return new ClinicalReportResponse(
+                sedeId, from, to,
+                toLong(counts.get("total_consultations")),
+                toLong(counts.get("total_exams")),
+                toLong(counts.get("total_prescriptions")),
+                diagnosisRows.stream().map(r -> new ClinicalReportResponse.DiagnosisFrequency(
+                        (String) r.get("code"), (String) r.get("description"), toLong(r.get("cnt")))).toList(),
+                serviceRows.stream().map(r -> new ClinicalReportResponse.ServiceFrequency(
+                        (String) r.get("service_name"), toLong(r.get("cnt")))).toList(),
+                medRows.stream().map(r -> new ClinicalReportResponse.MedicationFrequency(
+                        (String) r.get("medication_name"), toLong(r.get("cnt")))).toList()
+        );
     }
 
     // ─── Helpers de conversión segura ─────────────────────────────────────────

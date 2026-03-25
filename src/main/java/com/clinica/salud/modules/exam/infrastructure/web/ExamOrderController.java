@@ -6,6 +6,7 @@ import com.clinica.salud.modules.exam.application.dto.RegisterExamResultRequest;
 import com.clinica.salud.modules.exam.application.usecase.CreateExamOrderUseCase;
 import com.clinica.salud.modules.exam.application.usecase.GetExamOrdersByPatientUseCase;
 import com.clinica.salud.modules.exam.application.usecase.RegisterExamResultUseCase;
+import com.clinica.salud.modules.exam.application.usecase.SignExamOrderUseCase;
 import com.clinica.salud.shared.exception.UnauthorizedException;
 import com.clinica.salud.shared.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -26,6 +27,7 @@ public class ExamOrderController {
     private final CreateExamOrderUseCase createExamOrderUseCase;
     private final GetExamOrdersByPatientUseCase getExamOrdersByPatientUseCase;
     private final RegisterExamResultUseCase registerExamResultUseCase;
+    private final SignExamOrderUseCase signExamOrderUseCase;
 
     @PostMapping("/api/exams/orders")
     @PreAuthorize("hasAuthority('EXAMENES_CREATE')")
@@ -42,6 +44,13 @@ public class ExamOrderController {
             @RequestParam UUID patientId) {
         List<ExamOrderResponse> response = getExamOrdersByPatientUseCase.execute(patientId);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PatchMapping("/api/exams/orders/{id}/sign")
+    @PreAuthorize("hasAuthority('EXAMENES_SIGN')")
+    public ResponseEntity<ApiResponse<ExamOrderResponse>> sign(@PathVariable UUID id) {
+        UUID userId = getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(signExamOrderUseCase.execute(id, userId)));
     }
 
     @PostMapping("/api/exams/orders/{id}/result")

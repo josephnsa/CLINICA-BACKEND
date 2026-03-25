@@ -7,6 +7,7 @@ import com.clinica.salud.modules.billing.application.dto.RegisterPaymentRequest;
 import com.clinica.salud.modules.billing.application.usecase.CreateInvoiceUseCase;
 import com.clinica.salud.modules.billing.application.usecase.GetCashRegisterSummaryUseCase;
 import com.clinica.salud.modules.billing.application.usecase.GetInvoiceUseCase;
+import com.clinica.salud.modules.billing.application.usecase.RefundInvoiceUseCase;
 import com.clinica.salud.modules.billing.application.usecase.RegisterPaymentUseCase;
 import com.clinica.salud.shared.exception.UnauthorizedException;
 import com.clinica.salud.shared.response.ApiResponse;
@@ -29,6 +30,7 @@ public class BillingController {
     private final GetInvoiceUseCase getInvoiceUseCase;
     private final RegisterPaymentUseCase registerPaymentUseCase;
     private final GetCashRegisterSummaryUseCase getCashRegisterSummaryUseCase;
+    private final RefundInvoiceUseCase refundInvoiceUseCase;
 
     @PostMapping("/api/invoices")
     @PreAuthorize("hasAuthority('FACTURACION_CREATE')")
@@ -53,6 +55,12 @@ public class BillingController {
             @RequestParam LocalDate date) {
         CashRegisterSummaryResponse response = getCashRegisterSummaryUseCase.execute(sedeId, date);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PatchMapping("/api/invoices/{id}/refund")
+    @PreAuthorize("hasAuthority('FACTURACION_REFUND')")
+    public ResponseEntity<ApiResponse<InvoiceResponse>> refund(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(refundInvoiceUseCase.execute(id)));
     }
 
     @PostMapping("/api/payments")

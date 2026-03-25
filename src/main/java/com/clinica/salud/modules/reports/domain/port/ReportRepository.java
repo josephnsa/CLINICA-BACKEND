@@ -1,5 +1,6 @@
 package com.clinica.salud.modules.reports.domain.port;
 
+import com.clinica.salud.modules.reports.application.dto.ClinicalReportResponse;
 import com.clinica.salud.modules.reports.application.dto.FinancialReportResponse;
 import com.clinica.salud.modules.reports.application.dto.InventoryReportResponse;
 import com.clinica.salud.modules.reports.application.dto.OperationalReportResponse;
@@ -14,4 +15,6 @@ public interface ReportRepository {
     FinancialReportResponse getFinancialReport(UUID sedeId, LocalDate from, LocalDate to);
 
     InventoryReportResponse getInventoryReport(UUID sedeId, LocalDate reportDate);
+
+    ClinicalReportResponse getClinicalReport(UUID sedeId, LocalDate from, LocalDate to);
 }

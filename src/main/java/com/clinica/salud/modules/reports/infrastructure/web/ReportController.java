@@ -1,9 +1,11 @@
 package com.clinica.salud.modules.reports.infrastructure.web;
 
+import com.clinica.salud.modules.reports.application.dto.ClinicalReportResponse;
 import com.clinica.salud.modules.reports.application.dto.FinancialReportResponse;
 import com.clinica.salud.modules.reports.application.dto.InventoryReportResponse;
 import com.clinica.salud.modules.reports.application.dto.OperationalReportResponse;
 import com.clinica.salud.modules.reports.application.dto.ReportRequest;
+import com.clinica.salud.modules.reports.application.usecase.GetClinicalReportUseCase;
 import com.clinica.salud.modules.reports.application.usecase.GetFinancialReportUseCase;
 import com.clinica.salud.modules.reports.application.usecase.GetInventoryReportUseCase;
 import com.clinica.salud.modules.reports.application.usecase.GetOperationalReportUseCase;
@@ -24,6 +26,7 @@ public class ReportController {
     private final GetOperationalReportUseCase operationalReportUseCase;
     private final GetFinancialReportUseCase financialReportUseCase;
     private final GetInventoryReportUseCase inventoryReportUseCase;
+    private final GetClinicalReportUseCase clinicalReportUseCase;
 
     @PostMapping("/operational")
     @PreAuthorize("hasAuthority('REPORTES_READ')")
@@ -43,5 +46,12 @@ public class ReportController {
     @PreAuthorize("hasAuthority('REPORTES_READ')")
     public ResponseEntity<ApiResponse<InventoryReportResponse>> inventory(@RequestParam UUID sedeId) {
         return ResponseEntity.ok(ApiResponse.ok(inventoryReportUseCase.execute(sedeId)));
+    }
+
+    @PostMapping("/clinical")
+    @PreAuthorize("hasAuthority('REPORTES_READ')")
+    public ResponseEntity<ApiResponse<ClinicalReportResponse>> clinical(
+            @Valid @RequestBody ReportRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(clinicalReportUseCase.execute(request)));
     }
 }
