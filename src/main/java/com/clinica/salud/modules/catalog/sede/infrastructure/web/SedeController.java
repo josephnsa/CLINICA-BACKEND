@@ -1,18 +1,19 @@
 package com.clinica.salud.modules.catalog.sede.infrastructure.web;
 
 import com.clinica.salud.shared.response.ApiResponse;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/catalog/sedes")
@@ -76,6 +77,44 @@ public class SedeController {
 
         return ResponseEntity.ok(ApiResponse.ok(sedes));
     }
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('CATALOGO_WRITE')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> create(
+            @Valid @RequestBody CreateSedeRequest request) {
+        UUID id = UUID.randomUUID();
+        jdbcTemplate.update("""
+            INSERT INTO sedes (id, code, name, address, is_active)
+            VALUES (?, ?, ?, ?, true)
+            """, id, request.code(), request.name(), request.address());
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT * FROM sedes WHERE id = ?", id);
+        return ResponseEntity.ok(ApiResponse.ok(rows.get(0)));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('CATALOGO_WRITE')")
+    public ResponseEntity<ApiResponse<Void>> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateSedeRequest request) {
+        int updated = jdbcTemplate.update("""
+            UPDATE sedes SET name = ?, address = ? WHERE id = ?
+            """, request.name(), request.address(), id);
+        if (updated == 0) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PatchMapping("/{id}/toggle")
+    @PreAuthorize("hasAuthority('CATALOGO_WRITE')")
+    public ResponseEntity<ApiResponse<Void>> toggle(@PathVariable UUID id) {
+        int updated = jdbcTemplate.update("""
+            UPDATE sedes SET is_active = NOT is_active WHERE id = ?
+            """, id);
+        if (updated == 0) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    public record CreateSedeRequest(@NotBlank String code, @NotBlank String name, String address) {}
+    public record UpdateSedeRequest(@NotBlank String name, String address) {}
 }
-
-

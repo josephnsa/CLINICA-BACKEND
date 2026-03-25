@@ -3,11 +3,9 @@ package com.clinica.salud.modules.agenda.infrastructure.web;
 import com.clinica.salud.modules.agenda.application.dto.AppointmentResponse;
 import com.clinica.salud.modules.agenda.application.dto.AvailabilityRequest;
 import com.clinica.salud.modules.agenda.application.dto.CreateAppointmentRequest;
+import com.clinica.salud.modules.agenda.application.dto.RescheduleRequest;
 import com.clinica.salud.modules.agenda.application.dto.TimeSlotDto;
-import com.clinica.salud.modules.agenda.application.usecase.CancelAppointmentUseCase;
-import com.clinica.salud.modules.agenda.application.usecase.CreateAppointmentUseCase;
-import com.clinica.salud.modules.agenda.application.usecase.GetAvailabilityUseCase;
-import com.clinica.salud.modules.agenda.application.usecase.GetAppointmentsByPatientUseCase;
+import com.clinica.salud.modules.agenda.application.usecase.*;
 import com.clinica.salud.modules.agenda.domain.model.Appointment;
 import com.clinica.salud.modules.agenda.infrastructure.persistence.AppointmentMapper;
 import com.clinica.salud.shared.exception.UnauthorizedException;
@@ -35,6 +33,11 @@ public class AppointmentController {
     private final CancelAppointmentUseCase cancelAppointmentUseCase;
     private final GetAvailabilityUseCase getAvailabilityUseCase;
     private final GetAppointmentsByPatientUseCase getAppointmentsByPatientUseCase;
+    private final RescheduleAppointmentUseCase rescheduleAppointmentUseCase;
+    private final CheckInUseCase checkInUseCase;
+    private final StartConsultationUseCase startConsultationUseCase;
+    private final CompleteAppointmentUseCase completeAppointmentUseCase;
+    private final MarkNoShowUseCase markNoShowUseCase;
     private final AppointmentMapper appointmentMapper;
 
     @PostMapping
@@ -76,6 +79,38 @@ public class AppointmentController {
                 .map(appointmentMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
+    @PatchMapping("/{id}/reschedule")
+    @PreAuthorize("hasAuthority('agenda:reschedule')")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> reschedule(
+            @PathVariable UUID id,
+            @Valid @RequestBody RescheduleRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(rescheduleAppointmentUseCase.execute(id, request)));
+    }
+
+    @PatchMapping("/{id}/checkin")
+    @PreAuthorize("hasAuthority('agenda:checkin')")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> checkIn(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(checkInUseCase.execute(id)));
+    }
+
+    @PatchMapping("/{id}/start-consultation")
+    @PreAuthorize("hasAuthority('agenda:start')")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> startConsultation(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(startConsultationUseCase.execute(id)));
+    }
+
+    @PatchMapping("/{id}/complete")
+    @PreAuthorize("hasAuthority('agenda:complete')")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> complete(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(completeAppointmentUseCase.execute(id)));
+    }
+
+    @PatchMapping("/{id}/no-show")
+    @PreAuthorize("hasAuthority('agenda:noshow')")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> noShow(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(markNoShowUseCase.execute(id)));
     }
 
     private static UUID getCurrentUserId() {
