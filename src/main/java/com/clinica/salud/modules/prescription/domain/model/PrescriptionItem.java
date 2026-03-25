@@ -22,5 +22,20 @@ public class PrescriptionItem {
     private String instructions;
     private int quantity;
     private boolean dispensed;
+
+    /**
+     * Valida que el ítem tenga los datos mínimos para una receta válida.
+     */
+    public void validate() {
+        if (medicationId == null) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("Cada ítem debe tener un medicamento asociado");
+        }
+        if (dose == null || dose.isBlank()) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("La dosis es obligatoria en cada medicamento recetado");
+        }
+        if (quantity <= 0) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("La cantidad del medicamento debe ser mayor a cero");
+        }
+    }
 }
 

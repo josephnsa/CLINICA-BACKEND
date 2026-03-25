@@ -47,4 +47,60 @@ public class Patient {
         if (birthDate == null) return 0;
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
+
+    /**
+     * Indica si el paciente es menor de edad (menos de 18 años).
+     */
+    public boolean isMinor() {
+        return getAge() < 18;
+    }
+
+    /**
+     * Desactiva al paciente. No se puede desactivar si ya está inactivo.
+     */
+    public void deactivate() {
+        if (!this.isActive) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("El paciente ya está inactivo");
+        }
+        this.isActive = false;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    /**
+     * Reactiva al paciente.
+     */
+    public void reactivate() {
+        if (this.isActive) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("El paciente ya está activo");
+        }
+        this.isActive = true;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    /**
+     * Actualiza el contacto de emergencia validando que el teléfono no esté vacío.
+     */
+    public void updateEmergencyContact(String name, String phone) {
+        if (phone == null || phone.isBlank()) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("El teléfono del contacto de emergencia es obligatorio");
+        }
+        this.emergencyName = name;
+        this.emergencyPhone = phone;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    /**
+     * Valida que el paciente tenga los datos mínimos requeridos.
+     */
+    public void validate() {
+        if (docNumber == null || docNumber.isBlank()) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("El número de documento es obligatorio");
+        }
+        if (firstName == null || firstName.isBlank()) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("El nombre del paciente es obligatorio");
+        }
+        if (lastName == null || lastName.isBlank()) {
+            throw new com.clinica.salud.shared.exception.BusinessRuleException("El apellido del paciente es obligatorio");
+        }
+    }
 }
