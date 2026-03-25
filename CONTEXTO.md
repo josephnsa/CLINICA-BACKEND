@@ -7,13 +7,13 @@
 - Seguridad: JWT (ya implementado)
 
 ## MÓDULOS PRIORIZADOS
-1. 🔴 Appointments (Citas) - Core #1
-2. 🔴 Clinical Notes (Historia Clínica) - Core #2
-3. 🔴 Patients (Pacientes) - Base
-4. 🟡 Prescriptions (Recetas)
-5. 🟡 Exams (Exámenes)
-6. 🟡 Billing (Facturación)
-7. 🟢 Catalogos (Specialties, Services, Medications)
+1. Appointments (Citas) - Core #1
+2. Clinical Notes (Historia Clínica) - Core #2
+3.  Patients (Pacientes) - Base
+4.  Prescriptions (Recetas)
+5.  Exams (Exámenes)
+6.  Billing (Facturación)
+7.  Catalogos (Specialties, Services, Medications)
 
 ## PATRONES A SEGUIR
 - Domain Events para comunicación entre módulos
