@@ -7,7 +7,7 @@ ALTER TABLE invoices ADD CONSTRAINT invoices_status_check
     CHECK (status IN ('DRAFT','PENDING','PAID','CANCELLED','REFUNDED'));
 
 -- 2. Tabla de lotes de inventario (fechas de vencimiento por lote)
-CREATE TABLE inventory_batches (
+CREATE TABLE IF NOT EXISTS inventory_batches (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     item_id         UUID        NOT NULL REFERENCES inventory_items(id),
     batch_number    VARCHAR(50) NOT NULL,
@@ -18,11 +18,11 @@ CREATE TABLE inventory_batches (
     CONSTRAINT chk_batch_quantity CHECK (quantity >= 0)
 );
 
-CREATE INDEX idx_inventory_batches_item   ON inventory_batches(item_id);
-CREATE INDEX idx_inventory_batches_expiry ON inventory_batches(expiry_date);
+CREATE INDEX IF NOT EXISTS idx_inventory_batches_item   ON inventory_batches(item_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_batches_expiry ON inventory_batches(expiry_date);
 
 -- 3. Tabla de proveedores (para compras)
-CREATE TABLE suppliers (
+CREATE TABLE IF NOT EXISTS suppliers (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     name        VARCHAR(200) NOT NULL,
     ruc         VARCHAR(20),
@@ -35,7 +35,7 @@ CREATE TABLE suppliers (
 );
 
 -- 4. Órdenes de compra a proveedores
-CREATE TABLE purchase_orders (
+CREATE TABLE IF NOT EXISTS purchase_orders (
     id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     supplier_id  UUID        NOT NULL REFERENCES suppliers(id),
     sede_id      UUID        NOT NULL REFERENCES sedes(id),
@@ -48,7 +48,7 @@ CREATE TABLE purchase_orders (
     received_at  TIMESTAMP
 );
 
-CREATE TABLE purchase_order_items (
+CREATE TABLE IF NOT EXISTS purchase_order_items (
     id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     purchase_order_id   UUID        NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
     medication_id       UUID        REFERENCES medications(id),
@@ -58,11 +58,11 @@ CREATE TABLE purchase_order_items (
     total               NUMERIC(10,2) NOT NULL
 );
 
-CREATE INDEX idx_purchase_orders_supplier ON purchase_orders(supplier_id);
-CREATE INDEX idx_purchase_orders_sede     ON purchase_orders(sede_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier ON purchase_orders(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_orders_sede     ON purchase_orders(sede_id);
 
 -- 5. Kardex de medicación por paciente
-CREATE TABLE medication_kardex (
+CREATE TABLE IF NOT EXISTS medication_kardex (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id      UUID        NOT NULL REFERENCES patients(id),
     prescription_id UUID        REFERENCES prescriptions(id),
@@ -75,8 +75,8 @@ CREATE TABLE medication_kardex (
     recorded_at     TIMESTAMP   NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_kardex_patient    ON medication_kardex(patient_id);
-CREATE INDEX idx_kardex_medication ON medication_kardex(medication_id);
+CREATE INDEX IF NOT EXISTS idx_kardex_patient    ON medication_kardex(patient_id);
+CREATE INDEX IF NOT EXISTS idx_kardex_medication ON medication_kardex(medication_id);
 
 -- 6. Firma profesional en órdenes de examen
 ALTER TABLE exam_orders ADD COLUMN IF NOT EXISTS
@@ -85,7 +85,7 @@ ALTER TABLE exam_orders ADD COLUMN IF NOT EXISTS
     signed_at   TIMESTAMP;
 
 -- 7. Consentimientos informados de pacientes
-CREATE TABLE patient_consents (
+CREATE TABLE IF NOT EXISTS patient_consents (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id  UUID        NOT NULL REFERENCES patients(id),
     type        VARCHAR(50) NOT NULL,   -- GENERAL, SURGERY, ANESTHESIA, DATA_PRIVACY
@@ -95,10 +95,10 @@ CREATE TABLE patient_consents (
     notes       TEXT
 );
 
-CREATE INDEX idx_consents_patient ON patient_consents(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consents_patient ON patient_consents(patient_id);
 
 -- 8. Reclamos e incidencias (Atención al Cliente)
-CREATE TABLE complaints (
+CREATE TABLE IF NOT EXISTS complaints (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id      UUID        REFERENCES patients(id),
     sede_id         UUID        REFERENCES sedes(id),
@@ -117,11 +117,11 @@ CREATE TABLE complaints (
     created_at      TIMESTAMP   NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_complaints_patient ON complaints(patient_id);
-CREATE INDEX idx_complaints_status  ON complaints(status);
+CREATE INDEX IF NOT EXISTS idx_complaints_patient ON complaints(patient_id);
+CREATE INDEX IF NOT EXISTS idx_complaints_status  ON complaints(status);
 
 -- 9. Encuestas de satisfacción
-CREATE TABLE satisfaction_surveys (
+CREATE TABLE IF NOT EXISTS satisfaction_surveys (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id      UUID        NOT NULL REFERENCES patients(id),
     appointment_id  UUID        REFERENCES appointments(id),
@@ -130,10 +130,10 @@ CREATE TABLE satisfaction_surveys (
     created_at      TIMESTAMP   NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_surveys_patient ON satisfaction_surveys(patient_id);
+CREATE INDEX IF NOT EXISTS idx_surveys_patient ON satisfaction_surveys(patient_id);
 
 -- 10. Tabla HRM: empleados/profesionales de salud
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID        REFERENCES users(id),
     sede_id         UUID        REFERENCES sedes(id),
@@ -151,7 +151,7 @@ CREATE TABLE employees (
     created_at      TIMESTAMP   NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE employee_schedules (
+CREATE TABLE IF NOT EXISTS employee_schedules (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id     UUID        NOT NULL REFERENCES employees(id),
     day_of_week     INT         NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Lunes
@@ -161,6 +161,6 @@ CREATE TABLE employee_schedules (
     is_active       BOOLEAN     NOT NULL DEFAULT TRUE
 );
 
-CREATE INDEX idx_employees_sede    ON employees(sede_id);
-CREATE INDEX idx_employees_user    ON employees(user_id);
-CREATE INDEX idx_schedules_employee ON employee_schedules(employee_id);
+CREATE INDEX IF NOT EXISTS idx_employees_sede    ON employees(sede_id);
+CREATE INDEX IF NOT EXISTS idx_employees_user    ON employees(user_id);
+CREATE INDEX IF NOT EXISTS idx_schedules_employee ON employee_schedules(employee_id);
