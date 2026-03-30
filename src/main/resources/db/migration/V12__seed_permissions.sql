@@ -2,7 +2,8 @@
 -- Módulo: patients
 INSERT INTO permissions (code, module, action, description) VALUES
     ('patients:read',  'patients', 'read',  'Ver pacientes y consentimientos'),
-    ('patients:write', 'patients', 'write', 'Crear/editar pacientes y consentimientos');
+    ('patients:write', 'patients', 'write', 'Crear/editar pacientes y consentimientos')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: agenda
 INSERT INTO permissions (code, module, action, description) VALUES
@@ -15,54 +16,64 @@ INSERT INTO permissions (code, module, action, description) VALUES
     ('agenda:complete',     'agenda', 'complete',     'Completar consulta'),
     ('agenda:noshow',       'agenda', 'noshow',       'Marcar no-show'),
     ('agenda:availability', 'agenda', 'availability', 'Gestionar disponibilidad'),
-    ('agenda:triage',       'agenda', 'triage',       'Registrar triaje');
+    ('agenda:triage',       'agenda', 'triage',       'Registrar triaje')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: catalog
 INSERT INTO permissions (code, module, action, description) VALUES
     ('CATALOGO_READ',  'catalog', 'read',  'Ver catálogos (sedes, especialidades, servicios, médicos, medicamentos, CIE10)'),
-    ('CATALOGO_WRITE', 'catalog', 'write', 'Crear/editar catálogos');
+    ('CATALOGO_WRITE', 'catalog', 'write', 'Crear/editar catálogos')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: billing
 INSERT INTO permissions (code, module, action, description) VALUES
     ('FACTURACION_CREATE', 'billing', 'create', 'Crear facturas'),
     ('FACTURACION_READ',   'billing', 'read',   'Ver facturas'),
-    ('FACTURACION_REFUND', 'billing', 'refund', 'Emitir reembolsos');
+    ('FACTURACION_REFUND', 'billing', 'refund', 'Emitir reembolsos')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: clinical
 INSERT INTO permissions (code, module, action, description) VALUES
     ('HISTORIA_CLINICA_READ',  'clinical', 'read',  'Ver notas clínicas'),
-    ('HISTORIA_CLINICA_WRITE', 'clinical', 'write', 'Crear notas clínicas');
+    ('HISTORIA_CLINICA_WRITE', 'clinical', 'write', 'Crear notas clínicas')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: exam
 INSERT INTO permissions (code, module, action, description) VALUES
     ('EXAMENES_CREATE', 'exam', 'create', 'Crear órdenes de examen'),
     ('EXAMENES_READ',   'exam', 'read',   'Ver órdenes de examen'),
     ('EXAMENES_SIGN',   'exam', 'sign',   'Firmar órdenes de examen'),
-    ('EXAMENES_RESULT', 'exam', 'result', 'Registrar resultados de examen');
+    ('EXAMENES_RESULT', 'exam', 'result', 'Registrar resultados de examen')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: prescription
 INSERT INTO permissions (code, module, action, description) VALUES
     ('PRESCRIPCIONES_CREATE',  'prescription', 'create',  'Crear prescripciones'),
     ('PRESCRIPCIONES_READ',    'prescription', 'read',    'Ver prescripciones'),
-    ('PRESCRIPCIONES_DISPENSE','prescription', 'dispense','Dispensar prescripciones');
+    ('PRESCRIPCIONES_DISPENSE','prescription', 'dispense','Dispensar prescripciones')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: inventory
 INSERT INTO permissions (code, module, action, description) VALUES
     ('INVENTARIO_READ',  'inventory', 'read',  'Ver inventario, proveedores y órdenes de compra'),
-    ('INVENTARIO_WRITE', 'inventory', 'write', 'Gestionar inventario, proveedores y órdenes de compra');
+    ('INVENTARIO_WRITE', 'inventory', 'write', 'Gestionar inventario, proveedores y órdenes de compra')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: hrm
 INSERT INTO permissions (code, module, action, description) VALUES
     ('RR_HH_READ',  'hrm', 'read',  'Ver empleados'),
-    ('RR_HH_WRITE', 'hrm', 'write', 'Gestionar empleados');
+    ('RR_HH_WRITE', 'hrm', 'write', 'Gestionar empleados')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: reports / audit
 INSERT INTO permissions (code, module, action, description) VALUES
-    ('REPORTES_READ', 'reports', 'read', 'Ver reportes y auditoría');
+    ('REPORTES_READ', 'reports', 'read', 'Ver reportes y auditoría')
+ON CONFLICT (code) DO NOTHING;
 
 -- Módulo: customer service
 INSERT INTO permissions (code, module, action, description) VALUES
-    ('ATENCION_CLIENTE_WRITE', 'customerservice', 'write', 'Gestionar quejas y atención al cliente');
+    ('ATENCION_CLIENTE_WRITE', 'customerservice', 'write', 'Gestionar quejas y atención al cliente')
+ON CONFLICT (code) DO NOTHING;
 
 -- ─── ASIGNACIÓN DE PERMISOS A ROLES ──────────────────────────────────────────
 
@@ -70,7 +81,8 @@ INSERT INTO permissions (code, module, action, description) VALUES
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
-WHERE r.code = 'ADMIN';
+WHERE r.code = 'ADMIN'
+ON CONFLICT DO NOTHING;
 
 -- MEDICO
 INSERT INTO role_permissions (role_id, permission_id)
@@ -93,7 +105,8 @@ WHERE r.code = 'MEDICO'
     'PRESCRIPCIONES_CREATE',
     'PRESCRIPCIONES_READ',
     'CATALOGO_READ'
-  );
+  )
+ON CONFLICT DO NOTHING;
 
 -- ENFERMERA
 INSERT INTO role_permissions (role_id, permission_id)
@@ -110,7 +123,8 @@ WHERE r.code = 'ENFERMERA'
     'EXAMENES_READ',
     'EXAMENES_RESULT',
     'CATALOGO_READ'
-  );
+  )
+ON CONFLICT DO NOTHING;
 
 -- RECEPCIONISTA
 INSERT INTO role_permissions (role_id, permission_id)
@@ -128,7 +142,8 @@ WHERE r.code = 'RECEPCIONISTA'
     'agenda:availability',
     'CATALOGO_READ',
     'ATENCION_CLIENTE_WRITE'
-  );
+  )
+ON CONFLICT DO NOTHING;
 
 -- CAJERO
 INSERT INTO role_permissions (role_id, permission_id)
@@ -141,7 +156,8 @@ WHERE r.code = 'CAJERO'
     'FACTURACION_READ',
     'FACTURACION_REFUND',
     'CATALOGO_READ'
-  );
+  )
+ON CONFLICT DO NOTHING;
 
 -- FARMACEUTICO
 INSERT INTO role_permissions (role_id, permission_id)
@@ -155,7 +171,8 @@ WHERE r.code = 'FARMACEUTICO'
     'INVENTARIO_READ',
     'INVENTARIO_WRITE',
     'CATALOGO_READ'
-  );
+  )
+ON CONFLICT DO NOTHING;
 
 -- PACIENTE_PORTAL
 INSERT INTO role_permissions (role_id, permission_id)
@@ -169,4 +186,5 @@ WHERE r.code = 'PACIENTE_PORTAL'
     'agenda:cancel',
     'EXAMENES_READ',
     'PRESCRIPCIONES_READ'
-  );
+  )
+ON CONFLICT DO NOTHING;
