@@ -29,8 +29,8 @@ buildNumber.properties
 #  CONFIGURACION SENSIBLE — nunca subir al repo
 # ============================================================
 src/main/resources/application.properties
-src/main/resources/application-prod.properties
 src/main/resources/application-staging.properties
+# application-prod.properties NO se ignora — solo tiene referencias a ${ENV_VAR}, sin credenciales reales
 .env
 .env.*
 *.env

@@ -124,6 +124,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Cloud SQL Socket Factory (conexión segura desde Cloud Run) -->
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>postgres-socket-factory</artifactId>
+            <version>1.19.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
