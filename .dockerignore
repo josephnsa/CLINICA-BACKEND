@@ -1,0 +1,33 @@
+# Build artifacts
+target/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.classpath
+*.project
+*.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docs
+*.md
+docs/
+
+# Test reports
+**/surefire-reports/
+
+# Secrets locales — NUNCA en la imagen
+application.properties
+application-dev.properties
+*.env
+.env*

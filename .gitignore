@@ -100,10 +100,10 @@ $RECYCLE.BIN/
 *~
 
 # ============================================================
-#  DOCKER (si se agrega en el futuro)
+#  DOCKER
 # ============================================================
 docker-compose.override.yml
-.dockerignore
+# .dockerignore NO se ignora — debe subirse al repo
 
 # ============================================================
 #  JVM CRASH
