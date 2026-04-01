@@ -1,0 +1,230 @@
+# =============================================================================
+# cloudbuild.yaml
+# Pipeline de CI/CD para salud-backend
+#
+# Disparado por: push a la rama release/develop
+# Proyecto GCP:  pe-axelior-clinapp-dev
+# Servicio:      salud-backend (Cloud Run · us-central1)
+#
+# Pasos:
+#   1. Permisos del wrapper Maven
+#   2. Build Maven (skip tests)
+#   3. Build imagen Docker
+#   4. Push a Artifact Registry (con tag de commit SHA y latest)
+#   5. Deploy a Cloud Run
+#   6. Verificacion de health check post-deploy
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Variables de sustitucion (configuradas en el trigger de Cloud Build)
+# Sobreescribibles por trigger o por ejecucion manual
+# ---------------------------------------------------------------------------
+substitutions:
+  _REGION: "us-central1"
+  _SERVICE_NAME: "salud-backend"
+  _AR_REPO: "clinica-backend"
+  _IMAGE_TAG: "latest"
+  _CLOUD_SQL_INSTANCE: "pe-axelior-clinapp-dev:us-central1:clinica-postgres"
+  _DB_NAME: "salud_db"
+  _DB_USER: "salud_app"
+  _CORS_ALLOWED_ORIGINS: "https://tu-frontend.com"
+  _SA_EMAIL: "clinica-backend-sa@pe-axelior-clinapp-dev.iam.gserviceaccount.com"
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "5"
+  _MEMORY: "512Mi"
+  _CPU: "1"
+  _CONCURRENCY: "80"
+  _TIMEOUT: "60s"
+  _PORT: "9090"
+
+# ---------------------------------------------------------------------------
+# Opciones globales del pipeline
+# ---------------------------------------------------------------------------
+options:
+  # Maquina con mas recursos para compilar Java (Maven + Docker)
+  machineType: "E2_HIGHCPU_8"
+  # Logging en Cloud Logging (permite ver los logs en la consola de GCP)
+  logging: CLOUD_LOGGING_ONLY
+  # Timeout global del pipeline completo: 30 minutos
+  timeout: "1800s"
+
+# ---------------------------------------------------------------------------
+# Pasos del pipeline
+# ---------------------------------------------------------------------------
+steps:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 1: Permisos del Maven Wrapper
+  # En Linux (Cloud Build), mvnw puede no tener permisos de ejecucion.
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "maven-permissions"
+    name: "ubuntu"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        chmod +x mvnw
+        echo ">> mvnw: permisos de ejecucion otorgados"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 2: Build con Maven
+  # Compila el proyecto y genera el JAR en target/
+  # Se omiten los tests para acelerar el pipeline de deploy.
+  # Para un pipeline completo con tests, cambiar -DskipTests por surefire config.
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "maven-build"
+    name: "maven:3.9-eclipse-temurin-17"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo ">> Iniciando build Maven..."
+        ./mvnw clean package -DskipTests -B \
+          -Dmaven.repo.local=/workspace/.m2/repository
+        echo ">> Build Maven completado"
+        ls -lh target/salud-backend-*.jar
+    # Cachear el repositorio Maven entre builds para acelerar el pipeline
+    volumes:
+      - name: "maven-cache"
+        path: "/workspace/.m2"
+    waitFor:
+      - "maven-permissions"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 3: Build de imagen Docker
+  # Usa el Dockerfile multi-stage del proyecto.
+  # La imagen se tagea con el commit SHA (para trazabilidad) y con "latest".
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "docker-build"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "--tag=us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+      - "--tag=us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
+      - "--tag=us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$SHORT_SHA"
+      - "--cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
+      - "."
+    waitFor:
+      - "maven-build"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 4a: Push de imagen con tag de commit SHA
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "docker-push-sha"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+    waitFor:
+      - "docker-build"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 4b: Push de imagen con tag "latest"
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "docker-push-latest"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
+    waitFor:
+      - "docker-build"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 5: Deploy a Cloud Run
+  # Usa siempre el tag de commit SHA para garantizar exactitud en el deploy.
+  # Los secretos DB_PASSWORD y JWT_SECRET se inyectan desde Secret Manager.
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "cloud-run-deploy"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image=us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+      - "--platform=managed"
+      - "--region=${_REGION}"
+      - "--port=${_PORT}"
+      - "--memory=${_MEMORY}"
+      - "--cpu=${_CPU}"
+      - "--min-instances=${_MIN_INSTANCES}"
+      - "--max-instances=${_MAX_INSTANCES}"
+      - "--concurrency=${_CONCURRENCY}"
+      - "--timeout=${_TIMEOUT}"
+      - "--service-account=${_SA_EMAIL}"
+      - "--add-cloudsql-instances=${_CLOUD_SQL_INSTANCE}"
+      - "--set-env-vars=SPRING_PROFILES_ACTIVE=prod"
+      - "--set-env-vars=DB_NAME=${_DB_NAME}"
+      - "--set-env-vars=DB_USER=${_DB_USER}"
+      - "--set-env-vars=CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE}"
+      - "--set-env-vars=CORS_ALLOWED_ORIGINS=${_CORS_ALLOWED_ORIGINS}"
+      - "--set-secrets=DB_PASSWORD=DB_PASSWORD:latest"
+      - "--set-secrets=JWT_SECRET=JWT_SECRET:latest"
+      - "--allow-unauthenticated"
+      - "--project=$PROJECT_ID"
+    waitFor:
+      - "docker-push-sha"
+      - "docker-push-latest"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PASO 6: Verificacion de health check post-deploy
+  # Espera a que Cloud Run propague la nueva revision (max 90 segundos)
+  # y luego verifica que el endpoint /actuator/health responde con status UP.
+  # ─────────────────────────────────────────────────────────────────────────
+  - id: "health-check"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo ">> Obteniendo URL del servicio..."
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --project=$PROJECT_ID \
+          --format="value(status.url)")
+        echo ">> URL: ${SERVICE_URL}"
+
+        echo ">> Esperando que la nueva revision este activa (60 segundos)..."
+        sleep 60
+
+        echo ">> Ejecutando health check..."
+        MAX_RETRIES=5
+        RETRY_DELAY=15
+        HTTP_STATUS=0
+
+        for i in $(seq 1 $MAX_RETRIES); do
+          echo "   Intento ${i}/${MAX_RETRIES}..."
+          HTTP_STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --max-time 15 \
+            "${SERVICE_URL}/actuator/health" || echo "000")
+
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo ">> Health check exitoso (HTTP ${HTTP_STATUS})"
+            HEALTH_RESPONSE=$(curl --silent --max-time 15 "${SERVICE_URL}/actuator/health")
+            echo ">> Respuesta: ${HEALTH_RESPONSE}"
+            exit 0
+          fi
+
+          echo "   HTTP ${HTTP_STATUS} - Reintentando en ${RETRY_DELAY}s..."
+          sleep $RETRY_DELAY
+        done
+
+        echo "ERROR: Health check fallo despues de ${MAX_RETRIES} intentos (ultimo HTTP: ${HTTP_STATUS})"
+        echo ">> Revisar los logs del servicio:"
+        gcloud logging read \
+          "resource.type=cloud_run_revision AND resource.labels.service_name=${_SERVICE_NAME} AND severity>=ERROR" \
+          --limit=20 \
+          --project=$PROJECT_ID \
+          --freshness=5m
+        exit 1
+    waitFor:
+      - "cloud-run-deploy"
+
+# ---------------------------------------------------------------------------
+# Imagenes producidas por este pipeline
+# Se registran en Cloud Build para trazabilidad
+# ---------------------------------------------------------------------------
+images:
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$SHORT_SHA"

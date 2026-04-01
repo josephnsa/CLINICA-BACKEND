@@ -11,8 +11,6 @@ source "$(dirname "$0")/gcp.env"
 
 IMAGE_URL="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${IMAGE_NAME}"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-CLOUD_SQL_INSTANCE="${PROJECT_ID}:${REGION}:${CLOUD_SQL_INSTANCE_NAME}"
-
 echo ">>> [1/5] Build Maven..."
 ./mvnw clean package -DskipTests -B
 
@@ -38,16 +36,16 @@ gcloud run deploy "$SERVICE_NAME" \
   --port=9090 \
   --memory=512Mi \
   --cpu=1 \
-  --min-instances=1 \
+  --min-instances=0 \
   --max-instances=5 \
   --concurrency=80 \
   --timeout=60s \
   --service-account="$SA_EMAIL" \
-  --add-cloudsql-instances="$CLOUD_SQL_INSTANCE" \
   --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
+  --set-env-vars="DB_HOST=${DB_HOST}" \
+  --set-env-vars="DB_PORT=${DB_PORT}" \
   --set-env-vars="DB_NAME=${DB_NAME}" \
   --set-env-vars="DB_USER=${DB_USER}" \
-  --set-env-vars="CLOUD_SQL_INSTANCE=${CLOUD_SQL_INSTANCE}" \
   --set-env-vars="CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}" \
   --set-secrets="DB_PASSWORD=DB_PASSWORD:latest" \
   --set-secrets="JWT_SECRET=JWT_SECRET:latest" \
