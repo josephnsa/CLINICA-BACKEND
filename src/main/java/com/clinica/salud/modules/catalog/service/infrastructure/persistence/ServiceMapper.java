@@ -8,12 +8,15 @@ import org.mapstruct.Mapping;
 public interface ServiceMapper {
 
     @Mapping(target = "specialtyId", source = "specialty.id")
+    /** MapStruct no enlaza solo el getter {@code isActive()} → hay que forzarlo o siempre queda {@code false} en dominio. */
+    @Mapping(target = "isActive", expression = "java(entity.isActive())")
     MedicalService toDomain(ServiceEntity entity);
 
-    @Mapping(target = "specialty.id", source = "specialtyId")
-    @Mapping(target = "specialty.code", ignore = true)
-    @Mapping(target = "specialty.name", ignore = true)
-    @Mapping(target = "specialty.active", ignore = true)
+    /**
+     * {@code specialty} se resuelve en el adaptador con una referencia JPA gestionada;
+     * no mapear aquí para evitar TransientObjectException al hacer flush.
+     */
+    @Mapping(target = "specialty", ignore = true)
     ServiceEntity toEntity(MedicalService domain);
 }
 

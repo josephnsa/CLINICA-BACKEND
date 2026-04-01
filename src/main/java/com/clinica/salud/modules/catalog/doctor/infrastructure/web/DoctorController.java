@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +26,8 @@ public class DoctorController {
     @PreAuthorize("hasAuthority('CATALOGO_READ')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> list(
             @RequestParam(required = false) UUID specialtyId,
-            @RequestParam(required = false) Boolean active) {
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String q) {
 
         StringBuilder sql = new StringBuilder("""
             SELECT d.id,
@@ -43,11 +45,27 @@ public class DoctorController {
             WHERE 1=1
             """);
 
-        if (specialtyId != null) sql.append(" AND d.specialty_id = '").append(specialtyId).append("'");
-        if (active != null) sql.append(" AND d.is_active = ").append(active);
+        List<Object> args = new ArrayList<>();
+        if (specialtyId != null) {
+            sql.append(" AND d.specialty_id = ?");
+            args.add(specialtyId);
+        }
+        if (active != null) {
+            sql.append(" AND d.is_active = ?");
+            args.add(active);
+        }
+        if (q != null && !q.isBlank()) {
+            sql.append("""
+                     AND (LOWER(COALESCE(u.full_name,'')) LIKE LOWER(?)
+                          OR LOWER(COALESCE(d.license_number,'')) LIKE LOWER(?))""");
+            String pattern = "%" + q.trim() + "%";
+            args.add(pattern);
+            args.add(pattern);
+        }
         sql.append(" ORDER BY u.full_name");
 
-        return ResponseEntity.ok(ApiResponse.ok(jdbcTemplate.queryForList(sql.toString())));
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), args.toArray());
+        return ResponseEntity.ok(ApiResponse.ok(rows));
     }
 
     @GetMapping("/{id}")

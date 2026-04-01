@@ -14,11 +14,13 @@ public class SearchCie10UseCase {
 
     private final Cie10CodeJpaRepository cie10CodeJpaRepository;
 
-    public Page<Cie10Response> execute(String query, Pageable pageable) {
-        String q = query != null ? query.trim() : "";
-        Page<Cie10CodeEntity> page = q.isEmpty()
-                ? cie10CodeJpaRepository.findAll(pageable)
-                : cie10CodeJpaRepository.search(q, pageable);
+    public Page<Cie10Response> execute(String code, String description, Pageable pageable) {
+        String c = code != null ? code.trim() : "";
+        String d = description != null ? description.trim() : "";
+        Page<Cie10CodeEntity> page =
+                c.isEmpty() && d.isEmpty()
+                        ? cie10CodeJpaRepository.findAll(pageable)
+                        : cie10CodeJpaRepository.searchFiltered(c, d, pageable);
         return page.map(e -> new Cie10Response(e.getCode(), e.getDescription(), e.getCategory()));
     }
 }

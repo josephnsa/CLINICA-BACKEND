@@ -3,6 +3,7 @@ package com.clinica.salud.modules.catalog.service.infrastructure.web;
 import com.clinica.salud.modules.catalog.service.application.dto.CreateServiceRequest;
 import com.clinica.salud.modules.catalog.service.application.dto.ServiceFilterRequest;
 import com.clinica.salud.modules.catalog.service.application.dto.ServiceResponse;
+import com.clinica.salud.modules.catalog.service.application.dto.UpdateServiceRequest;
 import com.clinica.salud.modules.catalog.service.application.usecase.CreateServiceUseCase;
 import com.clinica.salud.modules.catalog.service.application.usecase.DeactivateServiceUseCase;
 import com.clinica.salud.modules.catalog.service.application.usecase.ListServicesUseCase;
@@ -22,9 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -49,7 +48,7 @@ public class ServiceController {
     @PreAuthorize("hasAuthority('CATALOGO_READ')")
     public ResponseEntity<ApiResponse<List<ServiceResponse>>> list(
             @RequestParam(required = false) UUID specialtyId,
-            @RequestParam(required = false, defaultValue = "true") boolean activeOnly) {
+            @RequestParam(name = "activeOnly", required = false, defaultValue = "true") boolean activeOnly) {
         ServiceFilterRequest filter = new ServiceFilterRequest(specialtyId, activeOnly);
         List<ServiceResponse> list = listServicesUseCase.execute(filter);
         return ResponseEntity.ok(ApiResponse.ok(list));
@@ -59,14 +58,8 @@ public class ServiceController {
     @PreAuthorize("hasAuthority('CATALOGO_WRITE')")
     public ResponseEntity<ApiResponse<ServiceResponse>> update(
             @PathVariable UUID id,
-            @RequestBody Map<String, Object> body) {
-        Integer durationMin = body.get("durationMin") != null
-                ? ((Number) body.get("durationMin")).intValue()
-                : null;
-        BigDecimal price = body.get("price") != null
-                ? new BigDecimal(body.get("price").toString())
-                : null;
-        ServiceResponse response = updateServiceUseCase.execute(id, durationMin, price);
+            @Valid @RequestBody UpdateServiceRequest body) {
+        ServiceResponse response = updateServiceUseCase.execute(id, body);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

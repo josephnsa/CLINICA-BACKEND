@@ -8,12 +8,12 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record CreateServiceRequest(
+public record UpdateServiceRequest(
         @NotBlank(message = "code es obligatorio") String code,
         @NotBlank(message = "name es obligatorio") String name,
-        @NotNull(message = "specialtyId es obligatorio") UUID specialtyId,
-        @Positive(message = "durationMin debe ser positivo") int durationMin,
-        @PositiveOrZero(message = "price no puede ser negativo") BigDecimal price,
-        Boolean active
-) {}
-
+        UUID specialtyId,
+        @NotNull @Positive(message = "durationMin debe ser positivo") Integer durationMin,
+        @NotNull @PositiveOrZero(message = "price no puede ser negativo") BigDecimal price,
+        boolean isActive
+) {
+}

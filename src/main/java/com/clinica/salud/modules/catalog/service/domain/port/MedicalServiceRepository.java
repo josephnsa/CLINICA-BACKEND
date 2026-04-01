@@ -16,7 +16,11 @@ public interface MedicalServiceRepository {
 
     List<MedicalService> findActiveBySpecialty(UUID specialtyId);
 
+    List<MedicalService> findBySpecialty(UUID specialtyId);
+
     List<MedicalService> findAllActive();
+
+    List<MedicalService> findAllServices();
 
     void deactivate(UUID id);
 }

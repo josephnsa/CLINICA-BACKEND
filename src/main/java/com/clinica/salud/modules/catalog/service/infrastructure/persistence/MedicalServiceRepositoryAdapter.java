@@ -2,6 +2,7 @@ package com.clinica.salud.modules.catalog.service.infrastructure.persistence;
 
 import com.clinica.salud.modules.catalog.service.domain.model.MedicalService;
 import com.clinica.salud.modules.catalog.service.domain.port.MedicalServiceRepository;
+import com.clinica.salud.modules.catalog.specialty.infrastructure.persistence.SpecialtyJpaRepository;
 import com.clinica.salud.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class MedicalServiceRepositoryAdapter implements MedicalServiceRepository {
 
     private final MedicalServiceJpaRepository medicalServiceJpaRepository;
+    private final SpecialtyJpaRepository specialtyJpaRepository;
     private final ServiceMapper serviceMapper;
 
     @Override
@@ -31,6 +33,11 @@ public class MedicalServiceRepositoryAdapter implements MedicalServiceRepository
     @Override
     public MedicalService save(MedicalService service) {
         ServiceEntity entity = serviceMapper.toEntity(service);
+        if (service.getSpecialtyId() != null) {
+            entity.setSpecialty(specialtyJpaRepository.getReferenceById(service.getSpecialtyId()));
+        } else {
+            entity.setSpecialty(null);
+        }
         entity = medicalServiceJpaRepository.save(entity);
         return serviceMapper.toDomain(entity);
     }
@@ -44,8 +51,24 @@ public class MedicalServiceRepositoryAdapter implements MedicalServiceRepository
     }
 
     @Override
+    public List<MedicalService> findBySpecialty(UUID specialtyId) {
+        return medicalServiceJpaRepository.findBySpecialty_IdOrderByNameAsc(specialtyId)
+                .stream()
+                .map(serviceMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<MedicalService> findAllActive() {
         return medicalServiceJpaRepository.findByIsActiveTrue()
+                .stream()
+                .map(serviceMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MedicalService> findAllServices() {
+        return medicalServiceJpaRepository.findAllByOrderByNameAsc()
                 .stream()
                 .map(serviceMapper::toDomain)
                 .collect(Collectors.toList());

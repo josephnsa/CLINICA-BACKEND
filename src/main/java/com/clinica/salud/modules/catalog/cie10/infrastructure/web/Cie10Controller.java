@@ -24,9 +24,13 @@ public class Cie10Controller {
     @GetMapping
     @PreAuthorize("hasAuthority('CATALOGO_READ')")
     public ResponseEntity<ApiResponse<Page<Cie10Response>>> search(
-            @RequestParam(required = false, defaultValue = "") String query,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String q,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<Cie10Response> page = searchCie10UseCase.execute(query, pageable);
+        Page<Cie10Response> page = searchCie10UseCase.execute(
+                code != null ? code : "",
+                q != null ? q : "",
+                pageable);
         return ResponseEntity.ok(ApiResponse.ok(page));
     }
 }

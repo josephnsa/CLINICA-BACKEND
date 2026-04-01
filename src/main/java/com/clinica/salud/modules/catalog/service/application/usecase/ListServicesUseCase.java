@@ -23,14 +23,14 @@ public class ListServicesUseCase {
 
     public List<ServiceResponse> execute(ServiceFilterRequest filter) {
         List<MedicalService> services;
-        if (filter.specialtyId() != null && filter.activeOnly()) {
-            services = medicalServiceRepository.findActiveBySpecialty(filter.specialtyId());
-        } else if (filter.specialtyId() != null) {
-            services = medicalServiceRepository.findActiveBySpecialty(filter.specialtyId());
-        } else if (filter.activeOnly()) {
-            services = medicalServiceRepository.findAllActive();
+        if (filter.specialtyId() != null) {
+            services = filter.activeOnly()
+                    ? medicalServiceRepository.findActiveBySpecialty(filter.specialtyId())
+                    : medicalServiceRepository.findBySpecialty(filter.specialtyId());
         } else {
-            services = medicalServiceRepository.findAllActive();
+            services = filter.activeOnly()
+                    ? medicalServiceRepository.findAllActive()
+                    : medicalServiceRepository.findAllServices();
         }
 
         Map<UUID, String> specialtyNames = specialtyJpaRepository.findAll().stream()

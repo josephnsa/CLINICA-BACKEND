@@ -12,6 +12,10 @@ public interface MedicalServiceJpaRepository extends JpaRepository<ServiceEntity
 
     List<ServiceEntity> findBySpecialty_IdAndIsActiveTrue(UUID specialtyId);
 
+    List<ServiceEntity> findBySpecialty_IdOrderByNameAsc(UUID specialtyId);
+
     List<ServiceEntity> findByIsActiveTrue();
+
+    List<ServiceEntity> findAllByOrderByNameAsc();
 }
 

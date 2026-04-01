@@ -27,13 +27,14 @@ public class CreateServiceUseCase {
         SpecialtyEntity specialty = specialtyJpaRepository.findById(request.specialtyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Specialty", request.specialtyId().toString()));
 
+        boolean active = request.active() == null || request.active();
         MedicalService service = MedicalService.builder()
                 .code(request.code())
                 .name(request.name())
                 .specialtyId(request.specialtyId())
                 .durationMin(request.durationMin())
                 .price(request.price())
-                .isActive(true)
+                .isActive(active)
                 .build();
 
         MedicalService saved = medicalServiceRepository.save(service);
