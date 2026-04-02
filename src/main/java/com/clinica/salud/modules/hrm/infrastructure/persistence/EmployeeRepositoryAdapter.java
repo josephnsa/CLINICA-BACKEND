@@ -30,6 +30,12 @@ public class EmployeeRepositoryAdapter implements EmployeeRepository {
     }
 
     @Override
+    public List<Employee> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public List<Employee> findBySedeId(UUID sedeId) {
         return jpaRepository.findBySedeId(sedeId).stream()
                 .map(mapper::toDomain).collect(Collectors.toList());
@@ -44,6 +50,12 @@ public class EmployeeRepositoryAdapter implements EmployeeRepository {
     @Override
     public List<Employee> findActiveBySedeId(UUID sedeId) {
         return jpaRepository.findBySedeIdAndIsActiveTrue(sedeId).stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Employee> findAllActive() {
+        return jpaRepository.findByIsActiveTrue().stream()
                 .map(mapper::toDomain).collect(Collectors.toList());
     }
 

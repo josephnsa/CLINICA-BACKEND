@@ -9,8 +9,8 @@ import java.util.UUID;
 
 public record CreatePrescriptionRequest(
         @NotNull UUID patientId,
-        UUID doctorId,
-        UUID appointmentId,
+        @NotNull UUID doctorId,
+        @NotNull UUID appointmentId,
         UUID diagnosisId,
         String notes,
         @NotEmpty @Valid List<PrescriptionItemRequest> items

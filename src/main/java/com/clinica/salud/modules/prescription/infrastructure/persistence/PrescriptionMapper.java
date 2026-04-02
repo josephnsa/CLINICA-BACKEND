@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+import java.util.ArrayList;
+
 @Mapper(componentModel = "spring")
 public interface PrescriptionMapper {
 
@@ -22,6 +24,9 @@ public interface PrescriptionMapper {
 
     @AfterMapping
     default void linkItems(@MappingTarget PrescriptionEntity entity, Prescription domain) {
+        if (entity.getItems() == null) {
+            entity.setItems(new ArrayList<>());
+        }
         entity.getItems().clear();
         if (domain.getItems() != null) {
             for (PrescriptionItem item : domain.getItems()) {
@@ -34,6 +39,10 @@ public interface PrescriptionMapper {
 
     @AfterMapping
     default void linkDomainItems(@MappingTarget Prescription prescription, PrescriptionEntity entity) {
+        if (entity.getItems() == null) {
+            prescription.setItems(new ArrayList<>());
+            return;
+        }
         prescription.setItems(entity.getItems().stream()
                 .map(this::toDomain)
                 .toList());

@@ -2,6 +2,8 @@ package com.clinica.salud.modules.prescription.application.usecase;
 
 import com.clinica.salud.modules.prescription.application.dto.PrescriptionItemResponse;
 import com.clinica.salud.modules.prescription.application.dto.PrescriptionResponse;
+import com.clinica.salud.modules.prescription.domain.model.Prescription;
+import com.clinica.salud.modules.prescription.domain.model.PrescriptionItem;
 import com.clinica.salud.modules.prescription.domain.port.PrescriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,7 @@ public class GetPrescriptionsByPatientUseCase {
                         p.getStatus(),
                         p.getCreatedAt(),
                         p.getCreatedBy(),
-                        p.getItems().stream()
+                        safeItems(p).stream()
                                 .map(i -> new PrescriptionItemResponse(
                                         i.getId(),
                                         i.getMedicationId(),
@@ -42,6 +44,10 @@ public class GetPrescriptionsByPatientUseCase {
                                 .toList()
                 ))
                 .toList();
+    }
+
+    private List<PrescriptionItem> safeItems(Prescription prescription) {
+        return prescription.getItems() == null ? List.of() : prescription.getItems();
     }
 }
 

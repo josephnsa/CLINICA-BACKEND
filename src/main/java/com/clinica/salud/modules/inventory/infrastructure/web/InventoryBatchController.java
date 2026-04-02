@@ -28,11 +28,25 @@ public class InventoryBatchController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> list(
             @RequestParam(required = false) UUID itemId) {
 
-        String sql = itemId != null
-                ? "SELECT b.*, i.name AS itemName FROM inventory_batches b LEFT JOIN inventory_items i ON b.item_id = i.id WHERE b.item_id = '" + itemId + "' ORDER BY b.expiry_date"
-                : "SELECT b.*, i.name AS itemName FROM inventory_batches b LEFT JOIN inventory_items i ON b.item_id = i.id ORDER BY b.expiry_date";
+        final String baseSql = """
+            SELECT b.id,
+                   i.medication_id               AS "medicationId",
+                   m.generic_name                AS "medicationName",
+                   b.batch_number                AS "batchNumber",
+                   b.quantity,
+                   b.expiry_date                 AS "expirationDate",
+                   b.received_at                 AS "receivedAt",
+                   b.notes
+            FROM inventory_batches b
+            LEFT JOIN inventory_items i ON b.item_id = i.id
+            LEFT JOIN medications m ON i.medication_id = m.id
+            """;
 
-        return ResponseEntity.ok(ApiResponse.ok(jdbcTemplate.queryForList(sql)));
+        List<Map<String, Object>> rows = itemId != null
+                ? jdbcTemplate.queryForList(baseSql + " WHERE b.item_id = ? ORDER BY b.expiry_date", itemId)
+                : jdbcTemplate.queryForList(baseSql + " ORDER BY b.expiry_date");
+
+        return ResponseEntity.ok(ApiResponse.ok(rows));
     }
 
     @GetMapping("/expiring")
@@ -42,16 +56,17 @@ public class InventoryBatchController {
 
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
             SELECT b.id,
-                   b.item_id       AS "itemId",
-                   i.name          AS "itemName",
+                   i.medication_id AS "medicationId",
+                   m.generic_name  AS "medicationName",
                    b.batch_number  AS "batchNumber",
                    b.quantity,
-                   b.expiry_date   AS "expiryDate",
+                   b.expiry_date   AS "expirationDate",
                    b.received_at   AS "receivedAt",
                    b.notes
             FROM inventory_batches b
             LEFT JOIN inventory_items i ON b.item_id = i.id
-            WHERE b.expiry_date <= CURRENT_DATE + ?::int
+            LEFT JOIN medications m ON i.medication_id = m.id
+            WHERE b.expiry_date <= CURRENT_DATE + (? * INTERVAL '1 day')
               AND b.quantity > 0
             ORDER BY b.expiry_date
             """, daysAhead);

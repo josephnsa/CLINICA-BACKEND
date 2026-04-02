@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -19,9 +20,10 @@ public class ListEmployeesUseCase {
 
     @Transactional(readOnly = true)
     public List<EmployeeResponse> execute(UUID sedeId, boolean activeOnly) {
+        Optional<UUID> sedeOpt = Optional.ofNullable(sedeId);
         List<Employee> employees = activeOnly
-                ? employeeRepository.findActiveBySedeId(sedeId)
-                : employeeRepository.findBySedeId(sedeId);
+                ? sedeOpt.map(employeeRepository::findActiveBySedeId).orElseGet(employeeRepository::findAllActive)
+                : sedeOpt.map(employeeRepository::findBySedeId).orElseGet(employeeRepository::findAll);
         return employees.stream().map(this::toResponse).collect(Collectors.toList());
     }
 

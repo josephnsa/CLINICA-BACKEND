@@ -37,15 +37,15 @@ public class Prescription {
         if (items == null || items.isEmpty()) {
             throw new BusinessRuleException("La receta no tiene ítems de medicamento");
         }
-        this.status = PrescriptionStatus.COMPLETED;
+        this.status = PrescriptionStatus.DISPENSED;
     }
 
     /**
      * Cancela la receta. No se puede cancelar si ya fue completada.
      */
     public void cancel() {
-        if (this.status == PrescriptionStatus.COMPLETED) {
-            throw new BusinessRuleException("No se puede cancelar una receta ya completada (dispensada)");
+        if (this.status == PrescriptionStatus.DISPENSED) {
+            throw new BusinessRuleException("No se puede cancelar una receta ya dispensada");
         }
         this.status = PrescriptionStatus.CANCELLED;
     }

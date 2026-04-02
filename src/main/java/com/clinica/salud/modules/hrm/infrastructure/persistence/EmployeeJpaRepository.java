@@ -7,6 +7,8 @@ import java.util.UUID;
 
 public interface EmployeeJpaRepository extends JpaRepository<EmployeeEntity, UUID> {
 
+    List<EmployeeEntity> findByIsActiveTrue();
+
     List<EmployeeEntity> findBySedeId(UUID sedeId);
 
     List<EmployeeEntity> findBySedeIdAndIsActiveTrue(UUID sedeId);

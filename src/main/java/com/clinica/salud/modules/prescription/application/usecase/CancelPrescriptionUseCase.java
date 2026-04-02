@@ -7,41 +7,24 @@ import com.clinica.salud.modules.prescription.domain.model.PrescriptionItem;
 import com.clinica.salud.modules.prescription.domain.port.PrescriptionRepository;
 import com.clinica.salud.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class DispensePrescriptionUseCase {
+public class CancelPrescriptionUseCase {
 
     private final PrescriptionRepository prescriptionRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     @Transactional
-    public PrescriptionResponse execute(UUID prescriptionId, UUID userId) {
+    public PrescriptionResponse execute(UUID prescriptionId) {
         Prescription prescription = prescriptionRepository.findById(prescriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prescription", prescriptionId.toString()));
-
-        final OffsetDateTime now = OffsetDateTime.now();
-        List<PrescriptionItem> updatedItems = safeItems(prescription).stream()
-                .map(i -> {
-                    i.setDispensed(true);
-                    i.setDispensedAt(now);
-                    i.setDispensedBy(userId);
-                    return i;
-                })
-                .toList();
-
-        prescription.setItems(updatedItems);
-        prescription.dispense();
-
+        prescription.cancel();
         Prescription saved = prescriptionRepository.save(prescription);
-        registerKardexOnDispense(saved, userId);
 
         List<PrescriptionItemResponse> itemResponses = safeItems(saved).stream()
                 .map(i -> new PrescriptionItemResponse(
@@ -71,25 +54,7 @@ public class DispensePrescriptionUseCase {
         );
     }
 
-    private void registerKardexOnDispense(Prescription prescription, UUID userId) {
-        for (PrescriptionItem item : safeItems(prescription)) {
-            jdbcTemplate.update("""
-                INSERT INTO medication_kardex
-                    (patient_id, prescription_id, medication_id, action, quantity, notes, recorded_by)
-                VALUES (?, ?, ?, 'DISPENSED', ?, ?, ?)
-                """,
-                prescription.getPatientId(),
-                prescription.getId(),
-                item.getMedicationId(),
-                item.getQuantity(),
-                prescription.getNotes(),
-                userId
-            );
-        }
-    }
-
     private List<PrescriptionItem> safeItems(Prescription prescription) {
         return prescription.getItems() == null ? List.of() : prescription.getItems();
     }
 }
-

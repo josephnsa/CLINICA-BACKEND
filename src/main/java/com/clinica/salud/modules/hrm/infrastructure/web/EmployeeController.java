@@ -43,7 +43,7 @@ public class EmployeeController {
     @GetMapping
     @PreAuthorize("hasAuthority('RR_HH_READ')")
     public ResponseEntity<ApiResponse<List<EmployeeResponse>>> list(
-            @RequestParam UUID sedeId,
+            @RequestParam(required = false) UUID sedeId,
             @RequestParam(defaultValue = "true") boolean activeOnly) {
         return ResponseEntity.ok(ApiResponse.ok("Empleados obtenidos", listEmployeesUseCase.execute(sedeId, activeOnly)));
     }

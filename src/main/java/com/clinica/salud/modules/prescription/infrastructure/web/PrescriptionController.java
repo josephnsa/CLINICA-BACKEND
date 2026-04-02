@@ -2,6 +2,7 @@ package com.clinica.salud.modules.prescription.infrastructure.web;
 
 import com.clinica.salud.modules.prescription.application.dto.CreatePrescriptionRequest;
 import com.clinica.salud.modules.prescription.application.dto.PrescriptionResponse;
+import com.clinica.salud.modules.prescription.application.usecase.CancelPrescriptionUseCase;
 import com.clinica.salud.modules.prescription.application.usecase.CreatePrescriptionUseCase;
 import com.clinica.salud.modules.prescription.application.usecase.DispensePrescriptionUseCase;
 import com.clinica.salud.modules.prescription.application.usecase.GetPrescriptionsByPatientUseCase;
@@ -27,6 +28,7 @@ public class PrescriptionController {
     private final CreatePrescriptionUseCase createPrescriptionUseCase;
     private final GetPrescriptionsByPatientUseCase getPrescriptionsByPatientUseCase;
     private final DispensePrescriptionUseCase dispensePrescriptionUseCase;
+    private final CancelPrescriptionUseCase cancelPrescriptionUseCase;
     private final JdbcTemplate jdbcTemplate;
 
     @PostMapping("/api/prescriptions")
@@ -51,6 +53,13 @@ public class PrescriptionController {
     public ResponseEntity<ApiResponse<PrescriptionResponse>> dispense(@PathVariable UUID id) {
         UUID userId = getCurrentUserId();
         PrescriptionResponse response = dispensePrescriptionUseCase.execute(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PatchMapping("/api/prescriptions/{id}/cancel")
+    @PreAuthorize("hasAuthority('PRESCRIPCIONES_CREATE')")
+    public ResponseEntity<ApiResponse<PrescriptionResponse>> cancel(@PathVariable UUID id) {
+        PrescriptionResponse response = cancelPrescriptionUseCase.execute(id);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

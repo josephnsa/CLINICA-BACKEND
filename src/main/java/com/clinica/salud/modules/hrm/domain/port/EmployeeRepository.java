@@ -12,11 +12,15 @@ public interface EmployeeRepository {
 
     Optional<Employee> findById(UUID id);
 
+    List<Employee> findAll();
+
     List<Employee> findBySedeId(UUID sedeId);
 
     List<Employee> findBySpecialtyId(UUID specialtyId);
 
     List<Employee> findActiveBySedeId(UUID sedeId);
+
+    List<Employee> findAllActive();
 
     boolean existsByDocNumber(String docNumber);
 
