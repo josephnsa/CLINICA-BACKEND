@@ -32,8 +32,10 @@ public class AppointmentController {
     private final CreateAppointmentUseCase createAppointmentUseCase;
     private final CancelAppointmentUseCase cancelAppointmentUseCase;
     private final GetAvailabilityUseCase getAvailabilityUseCase;
+    private final GetAllAppointmentsUseCase getAllAppointmentsUseCase;
     private final GetAppointmentsByPatientUseCase getAppointmentsByPatientUseCase;
     private final RescheduleAppointmentUseCase rescheduleAppointmentUseCase;
+    private final ConfirmAppointmentUseCase confirmAppointmentUseCase;
     private final CheckInUseCase checkInUseCase;
     private final StartConsultationUseCase startConsultationUseCase;
     private final CompleteAppointmentUseCase completeAppointmentUseCase;
@@ -69,6 +71,17 @@ public class AppointmentController {
         return ResponseEntity.ok(ApiResponse.ok(slots));
     }
 
+    @GetMapping
+    @PreAuthorize("hasAuthority('agenda:read')")
+    public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getAll(
+            @PageableDefault(size = 200) Pageable pageable) {
+        List<Appointment> appointments = getAllAppointmentsUseCase.execute(pageable);
+        List<AppointmentResponse> responses = appointments.stream()
+                .map(appointmentMapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("hasAuthority('agenda:read')")
     public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getByPatient(
@@ -87,6 +100,12 @@ public class AppointmentController {
             @PathVariable UUID id,
             @Valid @RequestBody RescheduleRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(rescheduleAppointmentUseCase.execute(id, request)));
+    }
+
+    @PatchMapping("/{id}/confirm")
+    @PreAuthorize("hasAuthority('agenda:confirm')")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> confirm(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(confirmAppointmentUseCase.execute(id)));
     }
 
     @PatchMapping("/{id}/checkin")

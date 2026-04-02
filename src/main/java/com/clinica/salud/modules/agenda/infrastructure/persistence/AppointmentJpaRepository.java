@@ -22,6 +22,9 @@ public interface AppointmentJpaRepository extends JpaRepository<AppointmentEntit
     @Query("SELECT e FROM AppointmentEntity e WHERE e.patient.id = :patientId")
     Page<AppointmentEntity> findByPatientIdOrderByStartTimeDesc(@Param("patientId") UUID patientId, Pageable pageable);
 
+    @Query("SELECT e FROM AppointmentEntity e ORDER BY e.startTime DESC")
+    Page<AppointmentEntity> findAllByOrderByStartTimeDesc(Pageable pageable);
+
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM AppointmentEntity a " +
             "WHERE a.doctor.id = :doctorId " +
             "AND a.status NOT IN (:cancelledStatus, :noShowStatus) " +

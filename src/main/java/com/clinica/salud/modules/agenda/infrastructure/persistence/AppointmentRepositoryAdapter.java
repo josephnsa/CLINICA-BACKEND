@@ -64,6 +64,13 @@ public class AppointmentRepositoryAdapter implements AppointmentRepository {
     }
 
     @Override
+    public List<Appointment> findAll(Pageable pageable) {
+        return appointmentJpaRepository.findAllByOrderByStartTimeDesc(pageable).stream()
+                .map(appointmentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean hasConflict(UUID doctorId, LocalDateTime start, LocalDateTime end, UUID excludeId) {
         return appointmentJpaRepository.existsByDoctorAndTimeOverlap(
                 doctorId,

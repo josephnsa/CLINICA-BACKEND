@@ -20,6 +20,8 @@ public interface AppointmentRepository {
 
     List<Appointment> findByPatientId(UUID patientId, Pageable pageable);
 
+    List<Appointment> findAll(Pageable pageable);
+
     boolean hasConflict(UUID doctorId, LocalDateTime start, LocalDateTime end, UUID excludeId);
 
     List<Appointment> findBySedeAndDateRange(UUID sedeId, LocalDateTime start, LocalDateTime end);
