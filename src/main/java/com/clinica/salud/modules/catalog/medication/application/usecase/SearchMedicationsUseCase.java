@@ -14,9 +14,10 @@ public class SearchMedicationsUseCase {
 
     private final MedicationRepository medicationRepository;
 
-    public Page<MedicationResponse> execute(String query, Pageable pageable) {
-        Page<Medication> page = medicationRepository.searchActive(
-                query != null ? query.trim() : "",
+    public Page<MedicationResponse> execute(String q, boolean activeOnly, Pageable pageable) {
+        Page<Medication> page = medicationRepository.search(
+                q != null ? q : "",
+                activeOnly,
                 pageable
         );
         return page.map(m -> new MedicationResponse(

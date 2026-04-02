@@ -18,6 +18,6 @@ public interface MedicationRepository {
 
     void deactivate(UUID id);
 
-    Page<Medication> searchActive(String query, Pageable pageable);
+    Page<Medication> search(String q, boolean activeOnly, Pageable pageable);
 }
 

@@ -13,14 +13,20 @@ public interface MedicationJpaRepository extends JpaRepository<MedicationEntity,
 
     Optional<MedicationEntity> findByCode(String code);
 
+    Page<MedicationEntity> findByIsActiveTrue(Pageable pageable);
+
     @Query("""
             SELECT m FROM MedicationEntity m
-            WHERE m.isActive = true
-              AND (
-                    LOWER(m.genericName) LIKE LOWER(CONCAT('%', :q, '%'))
-                 OR LOWER(m.commercialName) LIKE LOWER(CONCAT('%', :q, '%'))
+            WHERE (
+                   LOWER(m.code) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(COALESCE(m.genericName,'')) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(COALESCE(m.commercialName,'')) LIKE LOWER(CONCAT('%', :q, '%'))
               )
+              AND (:activeOnly = false OR m.isActive = true)
             """)
-    Page<MedicationEntity> searchActive(@Param("q") String query, Pageable pageable);
+    Page<MedicationEntity> searchByTerm(
+            @Param("q") String q,
+            @Param("activeOnly") boolean activeOnly,
+            Pageable pageable);
 }
 

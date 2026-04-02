@@ -44,10 +44,15 @@ public class MedicationRepositoryAdapter implements MedicationRepository {
     }
 
     @Override
-    public Page<Medication> searchActive(String query, Pageable pageable) {
-        String q = query != null ? query.trim() : "";
-        return medicationJpaRepository.searchActive(q, pageable)
-                .map(medicationMapper::toDomain);
+    public Page<Medication> search(String q, boolean activeOnly, Pageable pageable) {
+        String term = q != null ? q.trim() : "";
+        if (term.isEmpty()) {
+            if (activeOnly) {
+                return medicationJpaRepository.findByIsActiveTrue(pageable).map(medicationMapper::toDomain);
+            }
+            return medicationJpaRepository.findAll(pageable).map(medicationMapper::toDomain);
+        }
+        return medicationJpaRepository.searchByTerm(term, activeOnly, pageable).map(medicationMapper::toDomain);
     }
 }
 

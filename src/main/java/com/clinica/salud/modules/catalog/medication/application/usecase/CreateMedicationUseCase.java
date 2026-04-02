@@ -26,7 +26,7 @@ public class CreateMedicationUseCase {
                 .commercialName(request.commercialName())
                 .presentation(request.presentation())
                 .unit(request.unit())
-                .isActive(true)
+                .isActive(request.active() == null || Boolean.TRUE.equals(request.active()))
                 .build();
 
         Medication saved = medicationRepository.save(medication);
