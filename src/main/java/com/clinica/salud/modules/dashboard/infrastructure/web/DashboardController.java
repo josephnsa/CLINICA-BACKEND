@@ -2,10 +2,13 @@ package com.clinica.salud.modules.dashboard.infrastructure.web;
 
 import com.clinica.salud.modules.dashboard.application.dto.*;
 import com.clinica.salud.modules.dashboard.application.usecase.*;
+import com.clinica.salud.shared.exception.UnauthorizedException;
 import com.clinica.salud.shared.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -22,6 +25,8 @@ public class DashboardController {
     private final GetYearlyBreakupUseCase       yearlyBreakupUseCase;
     private final GetRecentTransactionsUseCase  transactionsUseCase;
     private final GetServicePerformanceUseCase  performanceUseCase;
+    private final GetNotificationsUseCase       notificationsUseCase;
+    private final GetHeaderUserUseCase          headerUserUseCase;
 
     /**
      * KPIs principales: ingresos del mes, % cambio, ingresos del año, citas, pacientes nuevos.
@@ -85,5 +90,38 @@ public class DashboardController {
         int m = month != null ? month : LocalDate.now().getMonthValue();
         int y = year  != null ? year  : LocalDate.now().getYear();
         return ResponseEntity.ok(ApiResponse.ok(performanceUseCase.execute(sedeId, m, y)));
+    }
+
+    /**
+     * Notificaciones del header: citas hoy, resultados, facturas pendientes, stock bajo.
+     * Header: campana con badge de conteo total.
+     */
+    @GetMapping("/notifications")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<NotificationSummaryResponse>> notifications(
+            @RequestParam UUID sedeId) {
+        return ResponseEntity.ok(ApiResponse.ok(notificationsUseCase.execute(sedeId)));
+    }
+
+    /**
+     * Información del usuario actual para el header: nombre, rol, sede, iniciales, sedes disponibles.
+     * Header: avatar + nombre + selector de sede.
+     */
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<HeaderUserResponse>> me() {
+        return ResponseEntity.ok(ApiResponse.ok(headerUserUseCase.execute(getCurrentUserId())));
+    }
+
+    private UUID getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof String)) {
+            throw new UnauthorizedException("Usuario no autenticado");
+        }
+        try {
+            return UUID.fromString(auth.getPrincipal().toString());
+        } catch (IllegalArgumentException e) {
+            throw new UnauthorizedException("Identidad de usuario inválida");
+        }
     }
 }
