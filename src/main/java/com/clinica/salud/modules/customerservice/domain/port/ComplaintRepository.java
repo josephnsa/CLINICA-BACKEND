@@ -13,6 +13,8 @@ public interface ComplaintRepository {
 
     Optional<Complaint> findById(UUID id);
 
+    List<Complaint> findAll();
+
     List<Complaint> findBySedeId(UUID sedeId);
 
     List<Complaint> findByStatus(ComplaintStatus status);

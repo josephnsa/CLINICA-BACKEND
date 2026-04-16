@@ -7,10 +7,13 @@ import com.clinica.salud.modules.exam.application.usecase.CreateExamOrderUseCase
 import com.clinica.salud.modules.exam.application.usecase.GetExamOrdersByPatientUseCase;
 import com.clinica.salud.modules.exam.application.usecase.RegisterExamResultUseCase;
 import com.clinica.salud.modules.exam.application.usecase.SignExamOrderUseCase;
+import com.clinica.salud.modules.integration.pdf.PdfService;
 import com.clinica.salud.shared.exception.UnauthorizedException;
 import com.clinica.salud.shared.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -28,6 +31,7 @@ public class ExamOrderController {
     private final GetExamOrdersByPatientUseCase getExamOrdersByPatientUseCase;
     private final RegisterExamResultUseCase registerExamResultUseCase;
     private final SignExamOrderUseCase signExamOrderUseCase;
+    private final PdfService pdfService;
 
     @PostMapping("/api/exams/orders")
     @PreAuthorize("hasAuthority('EXAMENES_CREATE')")
@@ -51,6 +55,16 @@ public class ExamOrderController {
     public ResponseEntity<ApiResponse<ExamOrderResponse>> sign(@PathVariable UUID id) {
         UUID userId = getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.ok(signExamOrderUseCase.execute(id, userId)));
+    }
+
+    @GetMapping("/api/exams/orders/{id}/pdf")
+    @PreAuthorize("hasAuthority('EXAMENES_READ')")
+    public ResponseEntity<byte[]> downloadExamOrderPdf(@PathVariable UUID id) {
+        byte[] pdf = pdfService.generateExamOrderPdf(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"exam-order-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @PostMapping("/api/exams/orders/{id}/result")

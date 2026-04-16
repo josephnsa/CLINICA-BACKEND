@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "app.mail.from",
+      "type": "java.lang.String",
+      "description": "Dirección de correo que aparece como remitente en notificaciones."
+    },
+    {
+      "name": "app.reminders.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Activa el scheduler de recordatorios de citas por email (diario 08:00)."
+    },
+    {
+      "name": "sunat.ruc",
+      "type": "java.lang.String",
+      "description": "RUC de la empresa emisora para los comprobantes electrónicos SUNAT."
+    },
+    {
+      "name": "sunat.pse.url",
+      "type": "java.lang.String",
+      "description": "URL base del PSE (Proveedor de Servicios Electrónicos), ej. Nubefact."
+    },
+    {
+      "name": "sunat.pse.token",
+      "type": "java.lang.String",
+      "description": "Token de autenticación para la API REST del PSE."
+    },
+    {
+      "name": "sunat.keystore.path",
+      "type": "java.lang.String",
+      "description": "Ruta al keystore JKS con el certificado digital de la empresa (classpath o filesystem)."
+    },
+    {
+      "name": "sunat.keystore.password",
+      "type": "java.lang.String",
+      "description": "Contraseña del keystore JKS para firma digital SUNAT."
+    }
+  ]
+}

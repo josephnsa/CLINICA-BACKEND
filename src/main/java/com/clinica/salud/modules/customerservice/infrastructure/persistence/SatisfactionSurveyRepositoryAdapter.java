@@ -22,6 +22,12 @@ public class SatisfactionSurveyRepositoryAdapter implements SatisfactionSurveyRe
     }
 
     @Override
+    public List<SatisfactionSurvey> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public List<SatisfactionSurvey> findByPatientId(UUID patientId) {
         return jpaRepository.findByPatientId(patientId).stream()
                 .map(mapper::toDomain).collect(Collectors.toList());

@@ -9,6 +9,8 @@ public interface SatisfactionSurveyRepository {
 
     SatisfactionSurvey save(SatisfactionSurvey survey);
 
+    List<SatisfactionSurvey> findAll();
+
     List<SatisfactionSurvey> findByPatientId(UUID patientId);
 
     List<SatisfactionSurvey> findByAppointmentId(UUID appointmentId);

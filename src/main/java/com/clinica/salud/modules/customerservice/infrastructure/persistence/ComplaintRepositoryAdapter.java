@@ -30,6 +30,12 @@ public class ComplaintRepositoryAdapter implements ComplaintRepository {
     }
 
     @Override
+    public List<Complaint> findAll() {
+        return jpaRepository.findAll().stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public List<Complaint> findBySedeId(UUID sedeId) {
         return jpaRepository.findBySedeId(sedeId).stream()
                 .map(mapper::toDomain).collect(Collectors.toList());

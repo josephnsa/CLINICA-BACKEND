@@ -9,10 +9,13 @@ import com.clinica.salud.modules.billing.application.usecase.GetCashRegisterSumm
 import com.clinica.salud.modules.billing.application.usecase.GetInvoiceUseCase;
 import com.clinica.salud.modules.billing.application.usecase.RefundInvoiceUseCase;
 import com.clinica.salud.modules.billing.application.usecase.RegisterPaymentUseCase;
+import com.clinica.salud.modules.integration.pdf.PdfService;
 import com.clinica.salud.shared.exception.UnauthorizedException;
 import com.clinica.salud.shared.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -31,6 +34,7 @@ public class BillingController {
     private final RegisterPaymentUseCase registerPaymentUseCase;
     private final GetCashRegisterSummaryUseCase getCashRegisterSummaryUseCase;
     private final RefundInvoiceUseCase refundInvoiceUseCase;
+    private final PdfService pdfService;
 
     @PostMapping("/api/invoices")
     @PreAuthorize("hasAuthority('FACTURACION_CREATE')")
@@ -55,6 +59,16 @@ public class BillingController {
             @RequestParam LocalDate date) {
         CashRegisterSummaryResponse response = getCashRegisterSummaryUseCase.execute(sedeId, date);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/api/invoices/{id}/pdf")
+    @PreAuthorize("hasAuthority('FACTURACION_READ')")
+    public ResponseEntity<byte[]> downloadInvoicePdf(@PathVariable UUID id) {
+        byte[] pdf = pdfService.generateInvoicePdf(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"invoice-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @PatchMapping("/api/invoices/{id}/refund")

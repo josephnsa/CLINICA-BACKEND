@@ -6,10 +6,13 @@ import com.clinica.salud.modules.prescription.application.usecase.CancelPrescrip
 import com.clinica.salud.modules.prescription.application.usecase.CreatePrescriptionUseCase;
 import com.clinica.salud.modules.prescription.application.usecase.DispensePrescriptionUseCase;
 import com.clinica.salud.modules.prescription.application.usecase.GetPrescriptionsByPatientUseCase;
+import com.clinica.salud.modules.integration.pdf.PdfService;
 import com.clinica.salud.shared.exception.UnauthorizedException;
 import com.clinica.salud.shared.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,6 +33,7 @@ public class PrescriptionController {
     private final DispensePrescriptionUseCase dispensePrescriptionUseCase;
     private final CancelPrescriptionUseCase cancelPrescriptionUseCase;
     private final JdbcTemplate jdbcTemplate;
+    private final PdfService pdfService;
 
     @PostMapping("/api/prescriptions")
     @PreAuthorize("hasAuthority('PRESCRIPCIONES_CREATE')")
@@ -54,6 +58,16 @@ public class PrescriptionController {
         UUID userId = getCurrentUserId();
         PrescriptionResponse response = dispensePrescriptionUseCase.execute(id, userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/api/prescriptions/{id}/pdf")
+    @PreAuthorize("hasAuthority('PRESCRIPCIONES_READ')")
+    public ResponseEntity<byte[]> downloadPrescriptionPdf(@PathVariable UUID id) {
+        byte[] pdf = pdfService.generatePrescriptionPdf(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"prescription-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @PatchMapping("/api/prescriptions/{id}/cancel")
