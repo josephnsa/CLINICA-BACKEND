@@ -34,7 +34,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --platform=managed \
   --region="$REGION" \
   --port=9090 \
-  --memory=512Mi \
+  --memory=1Gi \
   --cpu=1 \
   --min-instances=0 \
   --max-instances=5 \
