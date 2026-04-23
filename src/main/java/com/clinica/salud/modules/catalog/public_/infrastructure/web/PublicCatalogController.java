@@ -38,20 +38,36 @@ public class PublicCatalogController {
                 SELECT d.id,
                        u.full_name        AS name,
                        s.name             AS specialty,
-                       se.name            AS sede,
-                       d.consultation_fee AS consultationFee,
-                       d.available        AS available
+                       (
+                           SELECT se.name
+                           FROM user_sedes us
+                           JOIN sedes se ON se.id = us.sede_id
+                           WHERE us.user_id = u.id
+                           ORDER BY se.name
+                           LIMIT 1
+                       )                  AS sede,
+                       CAST(0 AS NUMERIC(10,2)) AS consultationFee,
+                       d.is_active        AS available
                 FROM doctors d
                 JOIN users u       ON d.user_id      = u.id
                 JOIN specialties s ON d.specialty_id = s.id
-                JOIN sedes se      ON d.sede_id       = se.id
-                WHERE d.available = true
+                WHERE d.is_active = true
                   AND u.is_active  = true
                 """);
 
         List<Object> params = new java.util.ArrayList<>();
         if (specialtyId != null) { sql.append("  AND d.specialty_id = ?\n"); params.add(specialtyId); }
-        if (sedeId      != null) { sql.append("  AND d.sede_id      = ?\n"); params.add(sedeId); }
+        if (sedeId      != null) {
+            sql.append("""
+                      AND EXISTS (
+                          SELECT 1
+                          FROM user_sedes usf
+                          WHERE usf.user_id = u.id
+                            AND usf.sede_id = ?
+                      )
+                    """);
+            params.add(sedeId);
+        }
         sql.append("ORDER BY u.full_name");
 
         List<Map<String, Object>> result = jdbcTemplate.queryForList(sql.toString(), params.toArray());
@@ -89,7 +105,7 @@ public class PublicCatalogController {
                        sch.start_time    AS startTime,
                        sch.end_time      AS endTime,
                        se.name           AS sede
-                FROM schedules sch
+                FROM doctor_availability sch
                 JOIN sedes se ON sch.sede_id = se.id
                 WHERE sch.doctor_id   = ?
                   AND sch.day_of_week = ?
@@ -97,9 +113,9 @@ public class PublicCatalogController {
                   AND NOT EXISTS (
                       SELECT 1 FROM appointments a
                       WHERE a.doctor_id     = sch.doctor_id
-                        AND a.scheduled_at::date = ?
-                        AND a.scheduled_at::time >= sch.start_time
-                        AND a.scheduled_at::time <  sch.end_time
+                        AND a.start_time::date = ?
+                        AND a.start_time::time >= sch.start_time
+                        AND a.start_time::time <  sch.end_time
                         AND a.status IN ('PENDING','CONFIRMED')
                   )
                 ORDER BY sch.start_time

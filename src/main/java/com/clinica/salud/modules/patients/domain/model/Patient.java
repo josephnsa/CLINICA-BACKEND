@@ -29,7 +29,8 @@ public class Patient {
     private String bloodType;
     private String emergencyName;
     private String emergencyPhone;
-    private boolean isActive;
+    @Builder.Default
+    private boolean isActive = true;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
