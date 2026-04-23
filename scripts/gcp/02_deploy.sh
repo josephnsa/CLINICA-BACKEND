@@ -29,10 +29,10 @@ docker push "${IMAGE_URL}:${IMAGE_TAG}"
 docker push "${IMAGE_URL}:latest"
 
 echo ">>> [5/5] Desplegando en Cloud Run..."
-# Un solo --set-env-vars: en algunas versiones de gcloud, repetir la bandera
-# deja solo el último bloque y rompe DB_HOST / CORS / etc.
-# GOOGLE_CLIENT_ID debe existir en gcp.env (puede ir vacío si no usas Google).
-RUN_ENV_VARS="SPRING_PROFILES_ACTIVE=prod,DB_HOST=${DB_HOST},DB_NAME=${DB_NAME},DB_USER=${DB_USER},CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS},GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+# Delimitador ^@^: si CORS_ALLOWED_ORIGINS lleva comas (varios orígenes), la coma
+# no rompe el listado de variables (gcloud interpretaría comas como separador).
+# GOOGLE_CLIENT_ID puede ir vacío si no usas Google Sign-In.
+RUN_ENV_VARS="^@^SPRING_PROFILES_ACTIVE=prod@DB_HOST=${DB_HOST}@DB_NAME=${DB_NAME}@DB_USER=${DB_USER}@CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}@GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
 
 gcloud run deploy "$SERVICE_NAME" \
   --image="${IMAGE_URL}:${IMAGE_TAG}" \
@@ -46,6 +46,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --max-instances=5 \
   --concurrency=80 \
   --timeout=60s \
+  --startup-probe="initialDelaySeconds=15,timeoutSeconds=5,periodSeconds=10,failureThreshold=30,tcpSocket.port=9090" \
   --service-account="$SA_EMAIL" \
   --set-env-vars="${RUN_ENV_VARS}" \
   --set-secrets="DB_PASSWORD=DB_PASSWORD:latest,JWT_SECRET=JWT_SECRET:latest" \
