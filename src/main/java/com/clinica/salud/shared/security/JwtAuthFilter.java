@@ -21,6 +21,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String FORWARDED_AUTHORIZATION_HEADER = "X-Forwarded-Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
@@ -30,7 +31,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        // API Gateway (ESPv2) replaces Authorization with SA token and moves client token here
+        String authHeader = request.getHeader(FORWARDED_AUTHORIZATION_HEADER);
+        if (authHeader == null) {
+            authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        }
 
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
             filterChain.doFilter(request, response);

@@ -49,7 +49,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --service-account="$SA_EMAIL" \
   --set-env-vars="${RUN_ENV_VARS}" \
   --set-secrets="DB_PASSWORD=DB_PASSWORD:latest,JWT_SECRET=JWT_SECRET:latest" \
-  --allow-unauthenticated \
+  --no-allow-unauthenticated \
   --project="$PROJECT_ID"
 
 echo ""
