@@ -35,6 +35,8 @@ src/main/resources/application-staging.properties
 .env
 .env.*
 *.env
+scripts/gcp/gcp.env
+scripts/gcp-run-bff/node_modules/
 secrets.properties
 credentials.properties
 

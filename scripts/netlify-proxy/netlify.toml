@@ -1,0 +1,16 @@
+# Copiar a la raíz del proyecto que despliega Netlify (junto al Angular).
+# Ajusta el dominio en comentarios si usas dominio custom.
+
+# [build] suele definirse en Netlify UI (Angular: publish = dist/<app>/browser, etc.)
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["google-auth-library"]
+
+# Same-origin: el navegador llama a https://TU-SITIO.netlify.app/backend-api/api/...
+# Netlify reescribe internamente a la función (status 200 = rewrite, no redirect).
+[[redirects]]
+  from = "/backend-api/*"
+  to = "/.netlify/functions/cloud-run-proxy"
+  status = 200
+  force = true
