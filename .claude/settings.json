@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Read(//c/Users/Cristofer/Desktop/CLINICA YOSELIN EL/ RARIN/BACKEND/CLINICA-BACKEND/src/main/java/com/clinica/salud/modules/billing/infrastructure/persistence/**)",
+      "Read(//c/Users/Cristofer/Desktop/CLINICA/ YOSELIN/ EL/ RARIN/BACKEND/CLINICA-BACKEND/src/main/java/com/clinica/salud/modules/billing/infrastructure/persistence/**)"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 package com.clinica.salud.shared.security;
 
+import com.clinica.salud.modules.auth.infrastructure.security.GoogleJwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,9 +27,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final GoogleJwtAuthFilter googleJwtAuthFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, GoogleJwtAuthFilter googleJwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.googleJwtAuthFilter = googleJwtAuthFilter;
     }
 
     @Bean
@@ -39,12 +42,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/auth/google/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/portal/auth/register", "/api/portal/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(googleJwtAuthFilter, JwtAuthFilter.class)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource));
         return http.build();
     }

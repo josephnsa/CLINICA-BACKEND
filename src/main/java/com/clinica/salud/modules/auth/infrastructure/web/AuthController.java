@@ -1,10 +1,12 @@
 package com.clinica.salud.modules.auth.infrastructure.web;
 
+import com.clinica.salud.modules.auth.application.dto.GoogleLoginRequest;
 import com.clinica.salud.modules.auth.application.dto.LoginRequest;
 import com.clinica.salud.modules.auth.application.dto.LoginResponse;
 import com.clinica.salud.modules.auth.application.dto.MeResponse;
 import com.clinica.salud.modules.auth.application.dto.MenuItemDto;
 import com.clinica.salud.modules.auth.application.dto.RefreshResponse;
+import com.clinica.salud.modules.auth.application.usecase.GoogleLoginUseCase;
 import com.clinica.salud.modules.auth.application.usecase.LoginUseCase;
 import com.clinica.salud.modules.auth.domain.model.MenuItem;
 import com.clinica.salud.modules.auth.domain.model.User;
@@ -35,6 +37,7 @@ public class AuthController {
     private static final String REFRESH_TOKEN_HEADER = "Refresh-Token";
 
     private final LoginUseCase loginUseCase;
+    private final GoogleLoginUseCase googleLoginUseCase;
     private final JwtService jwtService;
     private final MenuRepository menuRepository;
     private final UserRepository userRepository;
@@ -42,6 +45,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = loginUseCase.execute(request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PostMapping("/google/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        LoginResponse response = googleLoginUseCase.execute(request.idToken());
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

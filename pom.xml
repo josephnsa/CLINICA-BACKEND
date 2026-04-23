@@ -161,6 +161,13 @@
             <version>4.12.0</version>
         </dependency>
 
+        <!-- ── Google Auth (verificación de Google ID Tokens) ── -->
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>1.23.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

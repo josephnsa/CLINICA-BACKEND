@@ -22,4 +22,6 @@ public class User {
     private List<String> permissions;
     private List<UUID> sedeIds;
     private boolean isActive;
+    private String googleId;
+    private String authProvider;
 }

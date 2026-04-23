@@ -27,7 +27,7 @@ public class UserEntity {
     @Column(nullable = false, unique = true, length = 200)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String password;
 
     @Column(name = "full_name", nullable = false, length = 200)
@@ -37,6 +37,14 @@ public class UserEntity {
     @JoinColumn(name = "role_id")
     private RoleEntity role;
 
+    @Column(name = "google_id", length = 255, unique = true)
+    private String googleId;
+
+    @Builder.Default
+    @Column(name = "auth_provider", length = 50, nullable = false)
+    private String authProvider = "LOCAL";
+
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
