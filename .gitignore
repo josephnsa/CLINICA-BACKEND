@@ -28,12 +28,15 @@ buildNumber.properties
 # ============================================================
 #  CONFIGURACION SENSIBLE — nunca subir al repo
 # ============================================================
-src/main/resources/application.properties
+# Overrides locales (copiar desde .example si hace falta)
+src/main/resources/application-local.properties
 src/main/resources/application-staging.properties
 # application-prod.properties NO se ignora — solo tiene referencias a ${ENV_VAR}, sin credenciales reales
 .env
 .env.*
 *.env
+scripts/gcp/gcp.env
+scripts/gcp-run-bff/node_modules/
 secrets.properties
 credentials.properties
 

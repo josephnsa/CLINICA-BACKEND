@@ -24,6 +24,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByGoogleId(String googleId) {
+        return userJpaRepository.findByGoogleId(googleId).map(userMapper::toDomain);
+    }
+
+    @Override
     public Optional<User> findById(UUID id) {
         return userJpaRepository.findById(id).map(userMapper::toDomain);
     }

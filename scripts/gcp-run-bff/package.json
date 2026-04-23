@@ -1,0 +1,11 @@
+{
+  "name": "salud-backend-bff",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.15.1"
+  }
+}

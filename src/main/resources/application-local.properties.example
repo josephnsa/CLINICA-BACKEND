@@ -1,0 +1,11 @@
+# Copia este archivo como:
+#   src/main/resources/application-local.properties
+# (application-local.properties está en .gitignore y no se sube a Git)
+#
+# Luego rellena contraseña y JWT y arranca el backend.
+
+spring.datasource.password=PON_AQUI_TU_PASSWORD_DE_SUPABASE
+app.jwt.secret=PON_AQUI_UN_HEX_DE_AL_MENOS_64_CARACTERES
+
+# Opcional si usas Google Sign-In en local:
+# GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com

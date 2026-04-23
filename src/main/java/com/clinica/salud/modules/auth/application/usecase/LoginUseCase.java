@@ -27,10 +27,10 @@ public class LoginUseCase {
     private final PasswordEncoder passwordEncoder;
 
     public LoginResponse execute(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email().trim())
+        User user = userRepository.findByEmail(request.email().trim().toLowerCase())
                 .orElseThrow(() -> new UnauthorizedException(INVALID_CREDENTIALS));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new UnauthorizedException(INVALID_CREDENTIALS);
         }
 

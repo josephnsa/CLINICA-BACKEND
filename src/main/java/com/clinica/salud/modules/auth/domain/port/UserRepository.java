@@ -12,6 +12,8 @@ public interface UserRepository {
 
     Optional<User> findById(UUID id);
 
+    Optional<User> findByGoogleId(String googleId);
+
     User save(User user);
 
     List<String> findPermissionsByRoleId(UUID roleId);

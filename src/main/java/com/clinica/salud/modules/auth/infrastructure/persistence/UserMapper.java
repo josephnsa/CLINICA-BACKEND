@@ -15,6 +15,9 @@ public interface UserMapper {
     @Mapping(target = "roleCode", expression = "java(entity.getRole() != null ? entity.getRole().getCode() : null)")
     @Mapping(target = "permissions", expression = "java(com.clinica.salud.modules.auth.infrastructure.persistence.UserMapper.toPermissionCodes(entity))")
     @Mapping(target = "sedeIds", expression = "java(java.util.Collections.emptyList())")
+    @Mapping(target = "googleId", source = "googleId")
+    @Mapping(target = "authProvider", source = "authProvider")
+    @Mapping(target = "isActive", source = "active")
     User toDomain(UserEntity entity);
 
     @Mapping(target = "id", source = "id")
@@ -22,6 +25,9 @@ public interface UserMapper {
     @Mapping(target = "lastLogin", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "googleId", source = "googleId")
+    @Mapping(target = "authProvider", source = "authProvider")
+    @Mapping(target = "isActive", source = "active")
     UserEntity toEntity(User domain);
 
     static List<String> toPermissionCodes(UserEntity entity) {
