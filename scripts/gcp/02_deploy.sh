@@ -47,6 +47,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-env-vars="DB_NAME=${DB_NAME}" \
   --set-env-vars="DB_USER=${DB_USER}" \
   --set-env-vars="CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}" \
+  --set-env-vars="GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" \
   --set-secrets="DB_PASSWORD=DB_PASSWORD:latest" \
   --set-secrets="JWT_SECRET=JWT_SECRET:latest" \
   --allow-unauthenticated \
