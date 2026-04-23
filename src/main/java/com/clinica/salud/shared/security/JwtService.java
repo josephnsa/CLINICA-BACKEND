@@ -26,7 +26,18 @@ public class JwtService {
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.expiration}") long expirationMs,
             @Value("${app.jwt.refresh-expiration:604800000}") long refreshExpirationMs) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "app.jwt.secret está vacío. En Cloud Run, revisa el secreto JWT_SECRET en Secret Manager.");
+        }
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < 32) {
+            throw new IllegalStateException(
+                    "app.jwt.secret debe tener al menos 32 bytes (HS256). Valor actual: "
+                            + secretBytes.length
+                            + " bytes. Regenera JWT_SECRET (p. ej. openssl rand -hex 32) y actualiza Secret Manager.");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(secretBytes);
         this.expirationMs = expirationMs;
         this.refreshExpirationMs = refreshExpirationMs;
     }

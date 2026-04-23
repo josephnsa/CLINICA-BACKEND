@@ -1,6 +1,7 @@
 package com.clinica.salud.shared.security;
 
 import com.clinica.salud.modules.auth.infrastructure.security.GoogleJwtAuthFilter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@Slf4j
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -62,10 +64,19 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${app.cors.allowed-origins}") String allowedOrigins) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(parseOrigins(allowedOrigins));
+        List<String> origins = parseOrigins(allowedOrigins);
+        if (origins.isEmpty()) {
+            log.warn(
+                    "app.cors.allowed-origins está vacío (revisa CORS_ALLOWED_ORIGINS en Cloud Run / gcp.env). "
+                            + "Se usa patrón amplio sin credenciales CORS para que el servicio pueda arrancar.");
+            config.setAllowedOriginPatterns(List.of("*"));
+            config.setAllowCredentials(false);
+        } else {
+            config.setAllowedOrigins(origins);
+            config.setAllowCredentials(true);
+        }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

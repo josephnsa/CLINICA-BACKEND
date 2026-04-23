@@ -39,14 +39,13 @@ gcloud run deploy "$SERVICE_NAME" \
   --platform=managed \
   --region="$REGION" \
   --port=9090 \
-  --memory=1Gi \
+  --memory=2Gi \
   --cpu=1 \
   --cpu-boost \
   --min-instances=0 \
   --max-instances=5 \
   --concurrency=80 \
   --timeout=60s \
-  --startup-probe="initialDelaySeconds=15,timeoutSeconds=5,periodSeconds=10,failureThreshold=30,tcpSocket.port=9090" \
   --service-account="$SA_EMAIL" \
   --set-env-vars="${RUN_ENV_VARS}" \
   --set-secrets="DB_PASSWORD=DB_PASSWORD:latest,JWT_SECRET=JWT_SECRET:latest" \
