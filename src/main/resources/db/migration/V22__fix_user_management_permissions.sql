@@ -4,10 +4,10 @@
 -- allowing those roles to list all system users — a security issue.
 
 -- 1. Add dedicated user-management permissions
-INSERT INTO permissions (id, code, description)
+INSERT INTO permissions (code, module, action, description)
 VALUES
-    (gen_random_uuid(), 'USUARIOS_READ',  'Ver y listar usuarios del sistema'),
-    (gen_random_uuid(), 'USUARIOS_WRITE', 'Crear y modificar usuarios del sistema')
+    ('USUARIOS_READ',  'security', 'read',  'Ver y listar usuarios del sistema'),
+    ('USUARIOS_WRITE', 'security', 'write', 'Crear y modificar usuarios del sistema')
 ON CONFLICT (code) DO NOTHING;
 
 -- 2. Grant both only to ADMIN
