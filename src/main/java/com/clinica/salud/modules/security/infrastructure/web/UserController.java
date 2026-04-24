@@ -47,7 +47,7 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOGO_READ')")
+    @PreAuthorize("hasAuthority('USUARIOS_READ')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> list(
             @RequestParam(required = false, defaultValue = "") String search,
             @RequestParam(required = false) String role,
@@ -98,7 +98,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CATALOGO_READ')")
+    @PreAuthorize("hasAuthority('USUARIOS_WRITE')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> create(@Valid @RequestBody UserCreateRequest body) {
         String email = body.email().trim().toLowerCase(Locale.ROOT);
         if (userJpaRepository.findByEmail(email).isPresent()) {
@@ -120,7 +120,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})
-    @PreAuthorize("hasAuthority('CATALOGO_READ')")
+    @PreAuthorize("hasAuthority('USUARIOS_WRITE')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody UserUpdateRequest body

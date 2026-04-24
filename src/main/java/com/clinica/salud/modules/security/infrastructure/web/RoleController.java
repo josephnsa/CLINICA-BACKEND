@@ -20,7 +20,7 @@ public class RoleController {
     private final RoleJpaRepository roleJpaRepository;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('CATALOGO_READ')")
+    @PreAuthorize("hasAuthority('USUARIOS_READ')")
     public ResponseEntity<ApiResponse<List<RoleEntity>>> list() {
         List<RoleEntity> roles = roleJpaRepository.findAll();
         return ResponseEntity.ok(ApiResponse.ok(roles));
