@@ -28,8 +28,8 @@ public class GetHeaderUserUseCase {
 
     @Transactional(readOnly = true)
     public HeaderUserResponse execute(UUID userId) {
-        // Datos del usuario + sede principal
-        Map<String, Object> user = jdbc.queryForMap("""
+        // Datos del usuario + primera sede asignada (LEFT JOIN para usuarios sin sede)
+        List<Map<String, Object>> rows = jdbc.queryForList("""
                 SELECT u.id::text  AS user_id,
                        u.full_name,
                        r.code      AS role_code,
@@ -37,19 +37,23 @@ public class GetHeaderUserUseCase {
                        s.name      AS sede_name
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
-                JOIN sedes s ON u.sede_id = s.id
+                LEFT JOIN user_sedes us ON us.user_id = u.id
+                LEFT JOIN sedes s ON s.id = us.sede_id
                 WHERE u.id = ?
                   AND u.is_active = true
+                LIMIT 1
                 """, userId);
 
-        if (user.isEmpty()) {
+        if (rows.isEmpty()) {
             throw new ResourceNotFoundException("User", userId.toString());
         }
 
+        Map<String, Object> user = rows.get(0);
         String fullName  = (String) user.get("full_name");
         String roleCode  = (String) user.get("role_code");
-        UUID   sedeId    = UUID.fromString((String) user.get("sede_id"));
-        String sedeName  = (String) user.get("sede_name");
+        String sedeIdStr = (String) user.get("sede_id");
+        UUID   sedeId    = sedeIdStr != null ? UUID.fromString(sedeIdStr) : null;
+        String sedeName  = sedeIdStr != null ? (String) user.get("sede_name") : "Sin sede asignada";
 
         // Sedes disponibles (ADMIN puede ver todas; otros solo la suya)
         List<SedeOption> availableSedes;
