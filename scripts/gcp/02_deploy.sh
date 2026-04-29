@@ -52,6 +52,15 @@ gcloud run deploy "$SERVICE_NAME" \
   --no-allow-unauthenticated \
   --project="$PROJECT_ID"
 
+# Si en consola se fijó tráfico a una revisión vieja, el deploy crea revisión nueva pero el 100% puede
+# seguir en la antigua. Forzar tráfico a la última revisión.
+echo ">>> Enrutando 100% del tráfico a la última revisión..."
+gcloud run services update-traffic "$SERVICE_NAME" \
+  --region="$REGION" \
+  --project="$PROJECT_ID" \
+  --to-latest \
+  --quiet
+
 echo ""
 echo "============================================="
 echo "✅ Despliegue exitoso."
