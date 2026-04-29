@@ -19,8 +19,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
@@ -73,7 +76,14 @@ public class SecurityConfig {
             config.setAllowedOriginPatterns(List.of("*"));
             config.setAllowCredentials(false);
         } else {
-            config.setAllowedOrigins(origins);
+            // Patrones: permiten credenciales con subdominios Firebase y localhost sin listar cada preview URL.
+            // Orígenes explícitos de app.cors (p. ej. dominio custom) se añaden como patrones literales.
+            Set<String> patterns = new LinkedHashSet<>();
+            patterns.add("http://localhost:*");
+            patterns.add("https://*.web.app");
+            patterns.add("https://*.firebaseapp.com");
+            origins.forEach(patterns::add);
+            config.setAllowedOriginPatterns(new ArrayList<>(patterns));
             config.setAllowCredentials(true);
         }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
