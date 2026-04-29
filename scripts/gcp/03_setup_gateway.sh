@@ -58,7 +58,12 @@ info:
   title: ${API_NAME}
   description: API Gateway para salud-backend en Cloud Run
   version: "1.0.0"
-host: "placeholder.uc.gateway.dev"
+# Host managed + allowCors: sin esto ESPv2 puede bloquear o no reenviar bien el preflight CORS al backend.
+# Ver: https://cloud.google.com/api-gateway/docs/oasv2-extensions#x-google-endpoints
+host: "${API_NAME}.endpoints.${PROJECT_ID}.cloud.goog"
+x-google-endpoints:
+  - name: "${API_NAME}.endpoints.${PROJECT_ID}.cloud.goog"
+    allowCors: True
 schemes:
   - https
 produces:
