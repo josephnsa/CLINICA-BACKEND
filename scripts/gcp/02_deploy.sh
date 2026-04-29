@@ -12,7 +12,8 @@ source "$(dirname "$0")/gcp.env"
 IMAGE_URL="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${IMAGE_NAME}"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 echo ">>> [1/5] Build Maven..."
-./mvnw clean package -DskipTests -B
+# bash: no exige chmod +x en mvnw (Cloud Shell / clones sin modo ejecutable)
+bash ./mvnw clean package -DskipTests -B
 
 echo ">>> [2/5] Creando repositorio en Artifact Registry (si no existe)..."
 gcloud artifacts repositories create "$AR_REPO" \
