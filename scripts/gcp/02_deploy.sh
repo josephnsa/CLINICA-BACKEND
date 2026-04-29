@@ -34,6 +34,8 @@ echo ">>> [5/5] Desplegando en Cloud Run..."
 # GOOGLE_CLIENT_ID puede ir vacío si no usas Google Sign-In.
 RUN_ENV_VARS="^@^SPRING_PROFILES_ACTIVE=prod@DB_HOST=${DB_HOST}@DB_NAME=${DB_NAME}@DB_USER=${DB_USER}@CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}@GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
 
+# Startup: Supabase + Flyway pueden tardar; TCP probe con varios reintentos (≤240s la ventana efectiva).
+# --no-cpu-throttling evita que el JVM quede “ahogado” antes de abrir el puerto (más coste en idle).
 gcloud run deploy "$SERVICE_NAME" \
   --image="${IMAGE_URL}:${IMAGE_TAG}" \
   --platform=managed \
@@ -42,6 +44,8 @@ gcloud run deploy "$SERVICE_NAME" \
   --memory=2Gi \
   --cpu=1 \
   --cpu-boost \
+  --no-cpu-throttling \
+  --startup-probe=tcpSocket.port=9090,initialDelaySeconds=15,periodSeconds=5,failureThreshold=45,timeoutSeconds=5 \
   --min-instances=0 \
   --max-instances=5 \
   --concurrency=80 \

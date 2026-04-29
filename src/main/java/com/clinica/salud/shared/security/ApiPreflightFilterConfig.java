@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 @Configuration
-public class ApiPreflightFilterRegistration {
+public class ApiPreflightFilterConfig {
 
     @Bean
     public FilterRegistrationBean<ApiPreflightOptionsFilter> apiPreflightFilterRegistration(
