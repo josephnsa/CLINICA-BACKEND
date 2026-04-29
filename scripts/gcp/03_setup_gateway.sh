@@ -11,7 +11,6 @@ source "$(dirname "$0")/gcp.env"
 
 API_NAME="${API_NAME:-clinica-salud-api}"
 GATEWAY_NAME="${GATEWAY_NAME:-clinica-gateway}"
-CONFIG_ID="${GATEWAY_CONFIG_ID:-v1}"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 # ── 1. Habilitar APIs necesarias ──────────────────────────────
@@ -21,6 +20,27 @@ gcloud services enable \
   servicemanagement.googleapis.com \
   servicecontrol.googleapis.com \
   --project="$PROJECT_ID"
+
+# api-config ids son inmutables en GCP: cada cambio de OpenAPI requiere un id nuevo (v2, v3, …).
+# Tras habilitar APIs: si GATEWAY_CONFIG_ID no está en gcp.env, se elige el primer vN libre.
+if [[ -n "${GATEWAY_CONFIG_ID:-}" ]]; then
+  CONFIG_ID="$GATEWAY_CONFIG_ID"
+else
+  CONFIG_ID=""
+  for i in $(seq 1 50); do
+    cid="v${i}"
+    if ! gcloud api-gateway api-configs describe "$cid" \
+        --api="$API_NAME" --project="$PROJECT_ID" &>/dev/null; then
+      CONFIG_ID="$cid"
+      break
+    fi
+  done
+  if [[ -z "$CONFIG_ID" ]]; then
+    echo "ERROR: No hay id libre entre v1 y v50. Define GATEWAY_CONFIG_ID en scripts/gcp/gcp.env (ej. v51)." >&2
+    exit 1
+  fi
+  echo ">>> GATEWAY_CONFIG_ID no definido en gcp.env; usando primer id libre: ${CONFIG_ID}"
+fi
 
 # ── 2. Obtener URL del backend Cloud Run ──────────────────────
 echo ">>> [2/6] Obteniendo URL de salud-backend..."
@@ -227,12 +247,17 @@ echo ">>> [4/6] Creando API '${API_NAME}'..."
 gcloud api-gateway apis create "$API_NAME" \
   --project="$PROJECT_ID" 2>/dev/null || echo "    API ya existe, continuando..."
 
-echo "    Creando api-config '${CONFIG_ID}'..."
-gcloud api-gateway api-configs create "$CONFIG_ID" \
-  --api="$API_NAME" \
-  --openapi-spec=/tmp/api-config.yaml \
-  --project="$PROJECT_ID" \
-  --backend-auth-service-account="$SA_EMAIL"
+if gcloud api-gateway api-configs describe "$CONFIG_ID" \
+    --api="$API_NAME" --project="$PROJECT_ID" &>/dev/null; then
+  echo "    api-config '${CONFIG_ID}' ya existe; omitiendo create..."
+else
+  echo "    Creando api-config '${CONFIG_ID}'..."
+  gcloud api-gateway api-configs create "$CONFIG_ID" \
+    --api="$API_NAME" \
+    --openapi-spec=/tmp/api-config.yaml \
+    --project="$PROJECT_ID" \
+    --backend-auth-service-account="$SA_EMAIL"
+fi
 
 # ── 5. Crear o actualizar Gateway ─────────────────────────────
 echo ">>> [5/6] Creando gateway '${GATEWAY_NAME}'..."
