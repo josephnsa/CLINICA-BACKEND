@@ -15,7 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,15 +33,10 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final GoogleJwtAuthFilter googleJwtAuthFilter;
-    private final ApiPreflightOptionsFilter apiPreflightOptionsFilter;
 
-    public SecurityConfig(
-            JwtAuthFilter jwtAuthFilter,
-            GoogleJwtAuthFilter googleJwtAuthFilter,
-            ApiPreflightOptionsFilter apiPreflightOptionsFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, GoogleJwtAuthFilter googleJwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.googleJwtAuthFilter = googleJwtAuthFilter;
-        this.apiPreflightOptionsFilter = apiPreflightOptionsFilter;
     }
 
     @Bean
@@ -59,7 +53,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
                         .anyRequest().authenticated())
-                .addFilterBefore(apiPreflightOptionsFilter, CorsFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(googleJwtAuthFilter, JwtAuthFilter.class)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource));
