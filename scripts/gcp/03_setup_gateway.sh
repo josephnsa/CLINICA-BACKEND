@@ -14,7 +14,7 @@ GATEWAY_NAME="${GATEWAY_NAME:-clinica-gateway}"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 # ── 1. Habilitar APIs necesarias ──────────────────────────────
-echo ">>> [1/6] Habilitando APIs de API Gateway..."
+echo ">>> [1/7] Habilitando APIs de API Gateway..."
 gcloud services enable \
   apigateway.googleapis.com \
   servicemanagement.googleapis.com \
@@ -43,26 +43,40 @@ else
 fi
 
 # ── 2. Obtener URL del backend Cloud Run ──────────────────────
-echo ">>> [2/6] Obteniendo URL de salud-backend..."
+echo ">>> [2/7] Obteniendo URL de salud-backend..."
 BACKEND_URL="$(gcloud run services describe "$SERVICE_NAME" \
   --region="$REGION" --project="$PROJECT_ID" \
   --format='value(status.url)')"
 BACKEND_URL="${BACKEND_URL%/}"
 echo "    Backend: $BACKEND_URL"
 
-# ── 3. Generar OpenAPI spec ───────────────────────────────────
-echo ">>> [3/6] Generando OpenAPI spec..."
+# ── 3. API registrada + managedService (host real para allowCors / ESPv2) ──
+echo ">>> [3/7] Asegurando API '${API_NAME}' y leyendo managedService..."
+gcloud api-gateway apis create "$API_NAME" \
+  --project="$PROJECT_ID" 2>/dev/null || echo "    API ya existe, continuando..."
+MANAGED_SERVICE="$(gcloud api-gateway apis describe "$API_NAME" \
+  --project="$PROJECT_ID" --format='value(managedService)')"
+if [[ -z "$MANAGED_SERVICE" ]]; then
+  echo "ERROR: managedService vacío tras describe de la API '${API_NAME}'." >&2
+  exit 1
+fi
+echo "    managedService: ${MANAGED_SERVICE}"
+
+# ── 4. Generar OpenAPI spec ───────────────────────────────────
+echo ">>> [4/7] Generando OpenAPI spec..."
 cat > /tmp/api-config.yaml << EOF
 swagger: "2.0"
 info:
   title: ${API_NAME}
   description: API Gateway para salud-backend en Cloud Run
   version: "1.0.0"
-# Host managed + allowCors: sin esto ESPv2 puede bloquear o no reenviar bien el preflight CORS al backend.
-# Ver: https://cloud.google.com/api-gateway/docs/oasv2-extensions#x-google-endpoints
-host: "${API_NAME}.endpoints.${PROJECT_ID}.cloud.goog"
+# host y x-google-endpoints.name DEBEN coincidir con managedService (gcloud api-gateway apis describe).
+# Formato típico: API_ID-HASH.apigateway.PROJECT_ID.cloud.goog — no usar .endpoints. salvo Endpoints clásico.
+# Ver: https://cloud.google.com/api-gateway/docs/quickstart (salida managedService)
+#      https://cloud.google.com/api-gateway/docs/oasv2-extensions#x-google-endpoints
+host: "${MANAGED_SERVICE}"
 x-google-endpoints:
-  - name: "${API_NAME}.endpoints.${PROJECT_ID}.cloud.goog"
+  - name: "${MANAGED_SERVICE}"
     allowCors: True
 schemes:
   - https
@@ -247,10 +261,8 @@ paths:
 EOF
 echo "    Spec generado en /tmp/api-config.yaml"
 
-# ── 4. Crear API (idempotente) ────────────────────────────────
-echo ">>> [4/6] Creando API '${API_NAME}'..."
-gcloud api-gateway apis create "$API_NAME" \
-  --project="$PROJECT_ID" 2>/dev/null || echo "    API ya existe, continuando..."
+# ── 5. Crear api-config (idempotente) ───────────────────────────
+echo ">>> [5/7] Api-config '${CONFIG_ID}' para API '${API_NAME}'..."
 
 if gcloud api-gateway api-configs describe "$CONFIG_ID" \
     --api="$API_NAME" --project="$PROJECT_ID" &>/dev/null; then
@@ -264,8 +276,8 @@ else
     --backend-auth-service-account="$SA_EMAIL"
 fi
 
-# ── 5. Crear o actualizar Gateway ─────────────────────────────
-echo ">>> [5/6] Creando gateway '${GATEWAY_NAME}'..."
+# ── 6. Crear o actualizar Gateway ─────────────────────────────
+echo ">>> [6/7] Creando gateway '${GATEWAY_NAME}'..."
 if gcloud api-gateway gateways describe "$GATEWAY_NAME" \
     --location="$REGION" --project="$PROJECT_ID" &>/dev/null; then
   echo "    Gateway ya existe, actualizando a config '${CONFIG_ID}'..."
@@ -282,8 +294,8 @@ else
     --project="$PROJECT_ID"
 fi
 
-# ── 6. Dar run.invoker al SA en Cloud Run ─────────────────────
-echo ">>> [6/6] Asignando roles/run.invoker al SA en Cloud Run..."
+# ── 7. Dar run.invoker al SA en Cloud Run ─────────────────────
+echo ">>> [7/7] Asignando roles/run.invoker al SA en Cloud Run..."
 gcloud run services add-iam-policy-binding "$SERVICE_NAME" \
   --region="$REGION" \
   --project="$PROJECT_ID" \
