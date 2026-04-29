@@ -52,14 +52,19 @@ gcloud run deploy "$SERVICE_NAME" \
   --no-allow-unauthenticated \
   --project="$PROJECT_ID"
 
-# Si en consola se fijó tráfico a una revisión vieja, el deploy crea revisión nueva pero el 100% puede
-# seguir en la antigua. Forzar tráfico a la última revisión.
-echo ">>> Enrutando 100% del tráfico a la última revisión..."
-gcloud run services update-traffic "$SERVICE_NAME" \
+# Si el tráfico quedó fijado a una revisión antigua, --to-latest lo corrige. Si la última revisión no arranca
+# (p. ej. Flyway, env, secretos), este paso falla y el tráfico sigue en la última revisión sana: revisa logs.
+echo ">>> Intentando enrutar 100% del tráfico a la última revisión (--to-latest)..."
+if gcloud run services update-traffic "$SERVICE_NAME" \
   --region="$REGION" \
   --project="$PROJECT_ID" \
   --to-latest \
-  --quiet
+  --quiet; then
+  echo "    Tráfico actualizado a la última revisión."
+else
+  echo "    AVISO: --to-latest falló (la revisión más nueva no pasa arranque o no hay revisión lista)."
+  echo "    El servicio sigue sirviendo la revisión que ya tenía tráfico. Revisa logs de la última revisión creada."
+fi
 
 echo ""
 echo "============================================="
